@@ -9,7 +9,8 @@ It is designed to run with no extra CLI and no dependency install.
 2. `new`: Create a change card from an idea.
 3. `apply`: Implement tasks from the change card.
 4. `check`: Validate acceptance criteria and test commands.
-5. `close`: Merge final behavior into `specs/` and archive the change.
+5. `analyze`: In Code CLI, analyze repository context and sync `minispec/specs/README.md` plus referenced docs.
+6. `close`: Merge final behavior into `specs/` and archive the change.
 
 ## Utility Scripts
 
@@ -52,12 +53,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "& 'scripts/ms-init.ps1' 
 
 Create or refresh `minispec/project.md` with these sections:
 
-- `## Stack` (`Language`, `Framework`, `Runtime`)
-- `## Commands` (`Install`, `Build`, `Test`, `Lint`)
-- `## Engineering Constraints`
-- `## Non-Goals`
-- `## Definition of Done`
-- `## Generation Metadata`
+- `## Stack` (`Language`, `Framework`, `Runtime`) [auto-filled by CLI]
+- `## Commands` (`Install`, `Build`, `Test`, `Lint`) [auto-filled by CLI]
+- `## Engineering Constraints` [manual-maintained]
+- `## Non-Goals` [manual-maintained]
+- `## Definition of Done` [manual-maintained]
+- `## Generation Metadata` [auto-filled by CLI]
+- `## Guided Inputs` [auto-filled when unresolved]
+- Optional `## Maintainer Notes` [manual-maintained]
 
 If stack detection is uncertain, keep explicit `TBD` placeholders instead of guessing.
 
@@ -96,7 +99,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "& 'scripts/ms-doctor.ps1
 
 Detect likely stack and commands from project files when possible; otherwise use guided placeholders.
 
-If `minispec/project.md` already exists, keep user customizations where obvious, or create a timestamped backup before refresh.
+If `minispec/project.md` already exists, update auto-filled sections and preserve manual-maintained sections. If section boundaries are unclear, create a timestamped backup before refresh.
 
 3. Review and correct commands.
 
@@ -114,6 +117,7 @@ Ask agent to run minispec actions:
 - `minispec new add refund filter`
 - `minispec apply 20260323-refund-filter`
 - `minispec check 20260323-refund-filter`
+- `minispec analyze deep .`
 - `minispec close 20260323-refund-filter`
 
 2. Run in Claude Code.
@@ -122,11 +126,12 @@ Ensure repo contains `CLAUDE.md` and `.claude/skills/minispec/SKILL.md`.
 
 Trigger the same actions through the minispec skill:
 
-- `project nextjs saas app`
-- `new add refund filter`
-- `apply 20260323-refund-filter`
-- `check 20260323-refund-filter`
-- `close 20260323-refund-filter`
+- `minispec project nextjs saas app`
+- `minispec new add refund filter`
+- `minispec apply 20260323-refund-filter`
+- `minispec check 20260323-refund-filter`
+- `minispec analyze deep`
+- `minispec close 20260323-refund-filter`
 
 ### D. Close Criteria
 
@@ -157,6 +162,22 @@ sh scripts/ms-close.sh 20260323-refund-filter refunds .
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -Command "& 'scripts/ms-close.ps1' -ChangeId 20260323-refund-filter -Domain refunds -Root ."
 ```
+
+### F. Analyze Canonical Specs
+
+In Code CLI, run `analyze` as a model-driven action. Do not rely on local analyze scripts.
+
+Examples:
+
+- `minispec analyze quick`
+- `minispec analyze normal`
+- `minispec analyze deep`
+
+Mode definitions:
+
+- `quick`: project-level overview.
+- `normal`: project + subproject/module boundaries.
+- `deep`: project + subprojects + logic hotspot analysis.
 
 ## Directory Layout
 

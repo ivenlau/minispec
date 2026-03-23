@@ -15,7 +15,7 @@ Lightweight spec-first workflow for code changes.
 
 ## Inputs
 
-- Action: `project`, `new`, `apply`, `check`, or `close`.
+- Action: `project`, `new`, `apply`, `check`, `analyze`, or `close`.
 - Optional change id, for example: `20260323-refund-filter`.
 - Optional user request text.
 
@@ -43,15 +43,19 @@ Lightweight spec-first workflow for code changes.
 4. Ask user to review and refine generated commands before implementation.
 5. Always execute `project` directly (no script dependency):
    - Create or refresh `minispec/project.md` using this contract structure:
-     - `## Stack` (`Language`, `Framework`, `Runtime`)
-     - `## Commands` (`Install`, `Build`, `Test`, `Lint`)
-     - `## Engineering Constraints`
-     - `## Non-Goals`
-     - `## Definition of Done`
-     - `## Generation Metadata` (include source and mode; add context when provided)
-   - If `minispec/project.md` exists, keep behavior conservative:
-     - keep user edits when obvious
-     - otherwise create a timestamped `.bak.<YYYYMMDDHHmmss>` backup before refresh
+     - `## Stack` (`Language`, `Framework`, `Runtime`) [auto-managed]
+     - `## Commands` (`Install`, `Build`, `Test`, `Lint`) [auto-managed]
+     - `## Engineering Constraints` [manual-managed]
+     - `## Non-Goals` [manual-managed]
+     - `## Definition of Done` [manual-managed]
+     - `## Generation Metadata` (source, mode, context) [auto-managed]
+     - `## Guided Inputs` [auto-managed when unresolved]
+   - If `minispec/project.md` exists, apply merge strategy:
+     - update only auto-managed sections
+     - preserve manual-managed sections as-is
+     - if section boundaries are ambiguous, create `.bak.<YYYYMMDDHHmmss>` before refresh
+   - Add an optional manual section when helpful:
+     - `## Maintainer Notes` [manual-managed]
    - If stack detection is uncertain, use explicit guided placeholders (`TBD`) instead of guessing.
 
 ## Action: apply
@@ -68,6 +72,26 @@ Lightweight spec-first workflow for code changes.
 2. Run commands from `minispec/project.md` where available (`test` and `lint` first).
 3. Record validation notes under `Notes` in the change file.
 4. If any acceptance item fails, leave status as `draft` or `in_progress`.
+
+## Action: analyze
+
+1. Generate or refresh canonical analysis docs under `minispec/specs/`.
+2. Execute analysis directly in Code CLI model context.
+3. Support levels:
+   - `quick`: project-level overview.
+   - `normal`: project + subproject/module boundaries.
+   - `deep`: project + subprojects + method/logic hotspots.
+4. Auto-update `minispec/specs/README.md` with:
+   - analysis snapshot
+   - referenced generated docs
+   - maintenance model
+5. Generate level-dependent referenced docs:
+   - always: `project-map.md`
+   - normal/deep: `subprojects.md`
+   - deep: `logic-deep-dive.md`
+6. Preserve manual section in `minispec/specs/README.md`:
+   - `## Maintainer Notes`
+7. If uncertain, mark findings as heuristic and avoid fabricated certainty.
 
 ## Action: close
 

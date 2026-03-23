@@ -14,6 +14,14 @@ param(
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+function Resolve-RootArgument {
+  param([string]$RootArg)
+  if (-not $RootArg) {
+    return (Get-Location).Path
+  }
+  return (Resolve-Path $RootArg).Path
+}
+
 function Invoke-MinispecScript {
   param(
     [string]$ScriptName,
@@ -29,17 +37,17 @@ function Invoke-MinispecScript {
 
 switch ($Action.ToLower()) {
   "init" {
-    $root = if ($Arg1) { $Arg1 } else { "." }
+    $root = Resolve-RootArgument -RootArg $Arg1
     Invoke-MinispecScript -ScriptName "ms-init.ps1" -ScriptArgs @("-Root", $root)
     break
   }
   "doctor" {
-    $root = if ($Arg1) { $Arg1 } else { "." }
+    $root = Resolve-RootArgument -RootArg $Arg1
     Invoke-MinispecScript -ScriptName "ms-doctor.ps1" -ScriptArgs @("-Root", $root)
     break
   }
   "project" {
-    $root = if ($Arg1) { $Arg1 } else { "." }
+    $root = Resolve-RootArgument -RootArg $Arg1
     $validModes = @("auto", "existing", "new")
     $mode = "auto"
     $contextParts = @()
@@ -62,7 +70,7 @@ switch ($Action.ToLower()) {
     }
     $changeId = $Arg1
     $domain = $Arg2
-    $root = if ($Arg3) { $Arg3 } else { "." }
+    $root = Resolve-RootArgument -RootArg $Arg3
     Invoke-MinispecScript -ScriptName "ms-close.ps1" -ScriptArgs @("-ChangeId", $changeId, "-Domain", $domain, "-Root", $root)
     break
   }
