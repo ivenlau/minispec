@@ -1,48 +1,50 @@
-﻿# Project Contract
+# Project Contract
 
 This file defines project-wide constraints for minispec execution.
 
 ## Stack
 
-- Language: TBD (pick language)
-- Framework: TBD (pick framework)
-- Runtime: TBD (pick runtime)
+- Language: POSIX shell + PowerShell 7 + Markdown
+- Framework: none (plain scripts and documentation)
+- Runtime: bash or sh (any POSIX-compliant shell); PowerShell 7+ for `.ps1` counterparts
 
 ## Commands
 
-- Install: TBD
-- Build: TBD
-- Test: TBD
-- Lint: TBD
+- Install: none (no runtime dependencies)
+- Build: none (no compilation step)
+- Test: `sh scripts/ms-doctor.sh .`
+- Lint: `shellcheck scripts/*.sh` and `pwsh -NoProfile -Command "Invoke-ScriptAnalyzer -Path scripts/*.ps1"` (requires shellcheck and PSScriptAnalyzer installed)
 
 ## Engineering Constraints
 
-- Do not introduce new runtime dependencies without explicit approval.
-- Keep changes minimal and focused on accepted scope.
-- Add or update tests for behavior changes.
+- Every script behavior change MUST update both `.sh` and `.ps1` to keep parity; single-side changes require an explicit justification in Notes.
+- No new runtime dependencies — the repo must remain zero-install.
+- Documentation and SKILL files are the contract; behavior described in them must be reflected in code and vice versa.
+- Script edits follow `set -eu` (POSIX) and `$ErrorActionPreference = "Stop"` (PS) conventions already in place.
 
 ## Non-Goals
 
-- Large refactors without a dedicated change card.
-- Unrelated cleanup during feature delivery.
+- Becoming a general task-orchestration CLI — stay scoped to spec-first change cards.
+- Supporting project analysis beyond what the 6 defined actions cover.
+- Runtime dependencies or compiled tooling (Node/Python/Rust etc.).
 
 ## Definition of Done
 
 - Acceptance checklist in change card is fully checked.
-- Tests pass locally with the defined project test command.
-- Related canonical spec in `minispec/specs/` is updated.
+- `sh scripts/ms-doctor.sh .` passes (exit 0) with no new semantic WARNs introduced by the change.
+- Both `.sh` and `.ps1` sides of any touched script are updated in parallel.
+- Related canonical spec in `minispec/specs/` is updated (e.g. `scripts.md`, `docs.md`, `skills.md`, `workflow.md`, `tooling.md`, `governance.md`).
 
 ## Generation Metadata
 
-- Source: guided:new-project
-- Mode: new
-- Generated at: 2026-03-23 15:10:23 +08:00
+- Source: manual:dogfood
+- Mode: existing
+- Generated at: 2026-04-22
 
-## Guided Inputs
+## Maintainer Notes
 
-- Language and framework?
-- Main runtime version requirement?
-- Preferred package/dependency manager?
-- Default build, test and lint commands?
-- Any banned dependencies or architecture constraints?
+<!-- manual-managed; preserved across ms-project regenerations -->
 
+- When adding detection for a new package ecosystem in `ms-project.*`, add a parallel `Detect-<Ecosystem>` on both sides in the same change card.
+- Change IDs follow `YYYYMMDD-short-kebab-slug`; bump the date only, not the slug, if re-opening a closed change.
+- `minispec/specs/workflow.md` is the self-spec and should be edited when `SKILL.md` action semantics change.

@@ -67,6 +67,35 @@ contains_file_text() {
   grep -Eiq "$pattern" "$file"
 }
 
+pkg_dep_names() {
+  # Print dep names from .dependencies and .devDependencies in a package.json
+  # (one name per line). Uses jq when available; otherwise a best-effort awk
+  # parser that handles npm-init-formatted files (one dep per line).
+  pkg_file="$1"
+  [ -f "$pkg_file" ] || return 0
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '((.dependencies // {}) + (.devDependencies // {})) | keys[]' "$pkg_file" 2>/dev/null
+    return 0
+  fi
+  awk '
+    BEGIN { in_dep = 0 }
+    /"(dependencies|devDependencies)"[[:space:]]*:[[:space:]]*\{/ { in_dep = 1; next }
+    in_dep && /^[[:space:]]*\}/ { in_dep = 0; next }
+    in_dep && /^[[:space:]]*"[^"]+"[[:space:]]*:/ {
+      line = $0
+      sub(/^[[:space:]]*"/, "", line)
+      sub(/"[[:space:]]*:.*$/, "", line)
+      print line
+    }
+  ' "$pkg_file"
+}
+
+pkg_has_dep() {
+  dep_name="$1"
+  file="${2:-$ROOT/package.json}"
+  pkg_dep_names "$file" | grep -Fxq -- "$dep_name"
+}
+
 has_project_markers() {
   [ -f "$ROOT/package.json" ] || \
   [ -f "$ROOT/pom.xml" ] || \
@@ -102,30 +131,30 @@ detect_node() {
     manager="bun"
   fi
 
-  if [ -f "$ROOT/tsconfig.json" ] || contains_file_text "$pkg" '"typescript"'; then
+  if [ -f "$ROOT/tsconfig.json" ] || pkg_has_dep "typescript" "$pkg"; then
     LANGUAGE="TypeScript"
   else
     LANGUAGE="JavaScript"
   fi
   RUNTIME="Node.js"
 
-  if contains_file_text "$pkg" '"next"'; then
+  if pkg_has_dep "next" "$pkg"; then
     FRAMEWORK="Next.js"
-  elif contains_file_text "$pkg" '"@nestjs/core"'; then
+  elif pkg_has_dep "@nestjs/core" "$pkg"; then
     FRAMEWORK="NestJS"
-  elif contains_file_text "$pkg" '"nuxt"'; then
+  elif pkg_has_dep "nuxt" "$pkg"; then
     FRAMEWORK="Nuxt"
-  elif contains_file_text "$pkg" '"react"'; then
+  elif pkg_has_dep "react" "$pkg"; then
     FRAMEWORK="React"
-  elif contains_file_text "$pkg" '"vue"'; then
+  elif pkg_has_dep "vue" "$pkg"; then
     FRAMEWORK="Vue"
-  elif contains_file_text "$pkg" '"@sveltejs/kit"|"svelte"'; then
+  elif pkg_has_dep "@sveltejs/kit" "$pkg" || pkg_has_dep "svelte" "$pkg"; then
     FRAMEWORK="Svelte/SvelteKit"
-  elif contains_file_text "$pkg" '"express"'; then
+  elif pkg_has_dep "express" "$pkg"; then
     FRAMEWORK="Express"
-  elif contains_file_text "$pkg" '"fastify"'; then
+  elif pkg_has_dep "fastify" "$pkg"; then
     FRAMEWORK="Fastify"
-  elif contains_file_text "$pkg" '"koa"'; then
+  elif pkg_has_dep "koa" "$pkg"; then
     FRAMEWORK="Koa"
   else
     FRAMEWORK="Node.js application"
@@ -457,6 +486,15 @@ else
   fi
 fi
 
+maintainer_notes=""
+if [ -f "$PROJECT_PATH" ]; then
+  maintainer_notes="$(awk '
+    /^## Maintainer Notes[[:space:]]*$/ { in_section=1; print; next }
+    in_section && /^## / { exit }
+    in_section { print }
+  ' "$PROJECT_PATH")"
+fi
+
 if [ -f "$PROJECT_PATH" ]; then
   ts="$(date +%Y%m%d%H%M%S)"
   backup_path="${PROJECT_PATH}.bak.${ts}"
@@ -528,6 +566,18 @@ if [ -n "$GUIDED" ]; then
 
 EOF
   printf '%s' "$GUIDED" >> "$PROJECT_PATH"
+fi
+
+if [ -n "$maintainer_notes" ]; then
+  printf '\n' >> "$PROJECT_PATH"
+  printf '%s\n' "$maintainer_notes" >> "$PROJECT_PATH"
+else
+  cat >> "$PROJECT_PATH" <<'EOF'
+
+## Maintainer Notes
+
+<!-- manual-managed; preserved across ms-project regenerations -->
+EOF
 fi
 
 printf 'Generated minispec/project.md\n'

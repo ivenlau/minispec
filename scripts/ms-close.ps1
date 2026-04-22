@@ -48,15 +48,16 @@ if (-not (Test-Path $changePath)) {
 
 $content = Get-Content -Path $changePath -Raw -Encoding UTF8
 
-$unchecked = [Regex]::Matches($content, "(?m)^\s*-\s*\[\s\]\s+")
-if ($unchecked.Count -gt 0) {
-  throw "Cannot close change. Acceptance or plan contains unchecked items."
-}
-
 $why = Get-MarkdownSection -Text $content -Heading "Why"
 $scope = Get-MarkdownSection -Text $content -Heading "Scope"
 $acceptance = Get-MarkdownSection -Text $content -Heading "Acceptance"
 $notes = Get-MarkdownSection -Text $content -Heading "Notes"
+
+$uncheckedInAcceptance = [Regex]::Matches($acceptance, "(?m)^\s*-\s*\[\s\]\s+")
+if ($uncheckedInAcceptance.Count -gt 0) {
+  throw "Cannot close change. Acceptance section has unchecked items."
+}
+
 $dateText = Get-Date -Format "yyyy-MM-dd"
 
 if (-not (Test-Path $specPath)) {
@@ -73,25 +74,27 @@ if ($specContent -match ("(?m)^##\s+Change\s+" + [Regex]::Escape($ChangeId) + "\
   throw "Change '$ChangeId' already merged in spec file: $specPath"
 }
 
-$mergeBlock = @"
-
-## Change $ChangeId ($dateText)
+$notesSection = if ($notes) { $notes } else { "- No additional notes." }
+$mergeTemplate = @'
+## Change {0} ({1})
 
 ### Why
-$why
+{2}
 
 ### Scope
-$scope
+{3}
 
 ### Acceptance
-$acceptance
+{4}
 
 ### Notes
-- Auto-merged from `minispec/changes/$ChangeId.md`
-$(if ($notes) { $notes } else { "- No additional notes." })
-"@
+- Auto-merged from `minispec/changes/{0}.md`
+- See `minispec/archive/{0}.md` for plan and risk notes.
+{5}
+'@
+$mergeBlock = $mergeTemplate -f $ChangeId, $dateText, $why, $scope, $acceptance, $notesSection
 
-$specContent = $specContent.TrimEnd() + "`r`n" + $mergeBlock.TrimStart() + "`r`n"
+$specContent = $specContent.TrimEnd() + "`r`n`r`n" + $mergeBlock.TrimEnd() + "`r`n"
 Set-Content -Path $specPath -Value $specContent -Encoding UTF8
 
 $updated = Set-ClosedStatus -Text $content

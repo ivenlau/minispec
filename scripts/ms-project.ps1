@@ -412,8 +412,20 @@ function Fill-GuidedDefaults {
   Add-GuidedPrompt -Info $Info -Text "Any banned dependencies or architecture constraints?"
 }
 
+function Get-MaintainerNotesBlock {
+  param([string]$Path)
+  if (-not (Test-Path $Path)) { return "" }
+  $text = Get-Content -Path $Path -Raw -Encoding UTF8
+  $pattern = "(?ms)^## Maintainer Notes[ \t]*\r?\n(.*?)(?=^## |\z)"
+  $m = [Regex]::Match($text, $pattern)
+  if ($m.Success) {
+    return "## Maintainer Notes`r`n" + $m.Groups[1].Value.TrimEnd()
+  }
+  return ""
+}
+
 function Render-ProjectContract {
-  param($Info, [string]$ContextText, [string]$ModeValue)
+  param($Info, [string]$ContextText, [string]$ModeValue, [string]$MaintainerNotesBlock = "")
   $generatedAt = Get-Date -Format "yyyy-MM-dd HH:mm:ss zzz"
 
   $lines = New-Object System.Collections.Generic.List[string]
@@ -479,6 +491,17 @@ function Render-ProjectContract {
     }
   }
 
+  $lines.Add("")
+  if ($MaintainerNotesBlock) {
+    foreach ($line in ($MaintainerNotesBlock -split "\r?\n")) {
+      $lines.Add($line)
+    }
+  } else {
+    $lines.Add("## Maintainer Notes")
+    $lines.Add("")
+    $lines.Add("<!-- manual-managed; preserved across ms-project regenerations -->")
+  }
+
   return ($lines -join "`r`n") + "`r`n"
 }
 
@@ -531,6 +554,8 @@ if ($effectiveMode -eq "existing") {
   }
 }
 
+$maintainerBlock = Get-MaintainerNotesBlock -Path $projectPath
+
 if (Test-Path $projectPath) {
   $timestamp = Get-Date -Format "yyyyMMddHHmmss"
   $backupPath = "$projectPath.bak.$timestamp"
@@ -538,7 +563,7 @@ if (Test-Path $projectPath) {
   Write-Output "Backup created: $backupPath"
 }
 
-$body = Render-ProjectContract -Info $info -ContextText $Context -ModeValue $effectiveMode
+$body = Render-ProjectContract -Info $info -ContextText $Context -ModeValue $effectiveMode -MaintainerNotesBlock $maintainerBlock
 Set-Content -Path $projectPath -Value $body -Encoding UTF8
 
 Write-Output "Generated minispec/project.md"

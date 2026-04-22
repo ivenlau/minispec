@@ -4,13 +4,14 @@ Repository default workflow uses minispec.
 
 ## Default Rule
 
-For any behavior change, execute minispec flow first:
+For any behavior change, execute the minispec flow in this order:
 
-1. `project` to generate or refresh `minispec/project.md`.
-2. `new` to create or update a change card.
-3. `apply` to implement only planned tasks.
-4. `check` to validate acceptance and tests.
-5. `close` to archive and update canonical specs.
+1. `project` — generate or refresh `minispec/project.md`.
+2. `new` — create or update a change card under `minispec/changes/`.
+3. `apply` — implement only the planned tasks.
+4. `check` — validate acceptance items and run project test/lint commands.
+5. `analyze` — on demand (`quick` | `normal` | `deep`), refresh canonical analysis docs in `minispec/specs/`.
+6. `close` — merge shipped behavior into `minispec/specs/<domain>.md` and move the card to `minispec/archive/`.
 
 ## Paths
 

@@ -1,0 +1,119 @@
+#!/usr/bin/env sh
+# minispec launcher (POSIX) — dispatches actions to scripts/ms-*.sh
+#
+# Resolution of the minispec install root:
+#   1. $MINISPEC_HOME if set.
+#   2. <this-script-dir>/../share/minispec  (when installed under a <prefix>/bin layout).
+#   3. <this-script-dir>/..                 (when running inside the source repo, bin/ sibling to scripts/).
+set -eu
+
+self="$0"
+# Follow symlinks so /usr/local/bin/minispec -> ~/.local/... still resolves correctly.
+while [ -L "$self" ]; do
+  link="$(readlink "$self")"
+  case "$link" in
+    /*) self="$link" ;;
+    *)  self="$(dirname "$self")/$link" ;;
+  esac
+done
+self_dir="$(CDPATH= cd -- "$(dirname -- "$self")" && pwd)"
+
+if [ -n "${MINISPEC_HOME:-}" ] && [ -d "$MINISPEC_HOME/scripts" ]; then
+  share_dir="$MINISPEC_HOME"
+elif [ -d "$self_dir/../share/minispec/scripts" ]; then
+  share_dir="$(CDPATH= cd -- "$self_dir/../share/minispec" && pwd)"
+elif [ -d "$self_dir/../scripts" ] && [ -d "$self_dir/../minispec" ]; then
+  share_dir="$(CDPATH= cd -- "$self_dir/.." && pwd)"
+else
+  echo "minispec: cannot locate install root. Set MINISPEC_HOME or reinstall." >&2
+  exit 1
+fi
+
+scripts_dir="$share_dir/scripts"
+
+print_help() {
+  cat <<'EOF'
+minispec — lightweight spec-first AI coding workflow
+
+Usage: minispec <action> [args]
+
+Script-backed actions:
+  init <dir>                   Scaffold minispec/ contract in <dir>.
+  doctor [<dir>]               Check structure and semantic health.
+  project [<dir>] [mode] [ctx] Generate/refresh minispec/project.md (agent-preferred; this is the script fallback).
+  close <id> <domain> [<dir>]  Close a change card and merge to specs/<domain>.md.
+
+Agent-driven actions (CLI prints guidance only):
+  new <idea>                   Create a change card from an idea.
+  apply <change-id>            Implement the plan.
+  check <change-id>            Validate acceptance + run test/lint.
+  analyze <quick|normal|deep>  Refresh canonical analysis specs.
+
+Meta:
+  --version, -v                Print minispec version.
+  --help, -h                   Print this help.
+
+Environment:
+  MINISPEC_HOME                Installation root (default: auto-detect).
+
+Examples:
+  minispec init .
+  minispec doctor .
+  minispec close 20260422-foo scripts .
+EOF
+}
+
+print_agent_hint() {
+  action="$1"
+  shift
+  cat <<EOF
+minispec: '$action' is an agent-driven action.
+
+Run it inside your AI CLI (Claude Code, Codex, or similar) so the agent can
+read .claude/skills/minispec/SKILL.md or .agents/skills/minispec/SKILL.md and
+execute the workflow correctly. For example, in your AI CLI:
+
+  minispec $action $*
+
+The CLI wrapper deliberately does not implement these actions so the agent
+remains the source of truth for Why/Scope/Acceptance decisions.
+EOF
+}
+
+action="${1:-}"
+if [ $# -gt 0 ]; then
+  shift
+fi
+
+case "$action" in
+  ""|--help|-h)
+    print_help
+    ;;
+  --version|-v)
+    if [ -f "$share_dir/VERSION" ]; then
+      head -n 1 "$share_dir/VERSION"
+    else
+      echo "unknown"
+    fi
+    ;;
+  init)
+    exec sh "$scripts_dir/ms-init.sh" "$@"
+    ;;
+  doctor)
+    exec sh "$scripts_dir/ms-doctor.sh" "$@"
+    ;;
+  project)
+    exec sh "$scripts_dir/ms-project.sh" "$@"
+    ;;
+  close)
+    exec sh "$scripts_dir/ms-close.sh" "$@"
+    ;;
+  new|apply|check|analyze)
+    print_agent_hint "$action" "$@"
+    ;;
+  *)
+    echo "minispec: unknown action '$action'" >&2
+    echo "Run 'minispec --help' for usage." >&2
+    exit 1
+    ;;
+esac

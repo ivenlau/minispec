@@ -1,0 +1,14 @@
+{
+  "name": "next-real-fixture",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "next build",
+    "test": "vitest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}

@@ -1,11 +1,13 @@
 ---
 name: minispec
-description: Lightweight spec-first workflow for code changes.
+description: Lightweight spec-first workflow for coding tasks.
 ---
+
+<!-- canonical source: minispec/SKILL.md; keep mirrors' `## Guardrails` in sync. -->
 
 # minispec
 
-Lightweight spec-first workflow for code changes.
+Lightweight spec-first workflow for coding tasks.
 
 ## Use This Skill When
 
@@ -41,7 +43,7 @@ Lightweight spec-first workflow for code changes.
 2. For existing repositories, detect stack and commands from project files.
 3. For new repositories, infer from user context or use guided placeholders.
 4. Ask user to review and refine generated commands before implementation.
-5. Always execute `project` directly (no script dependency):
+5. Prefer in-context generation over `ms-project.*`; fall back to the script only when running without an AI agent. When generating in-context:
    - Create or refresh `minispec/project.md` using this contract structure:
      - `## Stack` (`Language`, `Framework`, `Runtime`) [auto-managed]
      - `## Commands` (`Install`, `Build`, `Test`, `Lint`) [auto-managed]
@@ -100,8 +102,16 @@ Lightweight spec-first workflow for code changes.
 3. Set frontmatter `status: closed` in the change file.
 4. Move the change file from `minispec/changes/` to `minispec/archive/`.
 
+The canonical spec only captures `Why`, `Scope`, `Acceptance`, and `Notes`. `Plan` and `Risks and Rollback` remain in `minispec/archive/<id>.md`; the merged spec block should cross-reference the archive file so readers can recover the full context.
+
 ## Output Style
 
 - Keep updates concise and concrete.
 - Always reference file paths changed.
 - Separate assumptions from confirmed facts.
+
+## Guardrails
+
+- No dependency additions without explicit approval.
+- No broad cleanup outside scope.
+- No close action if acceptance is incomplete.

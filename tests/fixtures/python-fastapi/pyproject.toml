@@ -1,0 +1,13 @@
+[project]
+name = "fastapi-fixture"
+version = "0.0.1"
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn>=0.29",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.pytest.ini_options]
+minversion = "7.0"

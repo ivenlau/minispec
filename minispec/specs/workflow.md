@@ -1,0 +1,106 @@
+# workflow
+
+Canonical shipped behavior for minispec's own 6-action workflow. This spec describes what each action must do from the perspective of an agent or script executing it. Both `SKILL.md` files and the `scripts/ms-*` implementations must satisfy this spec.
+
+## Actions Overview
+
+The workflow consists of six ordered actions: `project`, `new`, `apply`, `check`, `analyze`, `close`. `project` runs once per repository and whenever stack/commands change. Change-cards flow through `new` → `apply` → `check` → `close`; `analyze` is on-demand.
+
+### project
+
+Inputs: optional `[root]`, optional mode (`auto` | `existing` | `new`), optional free-form context string.
+
+- Given `minispec/project.md` does not exist, When `project` runs, Then a new file is generated with sections `Stack`, `Commands`, `Engineering Constraints`, `Non-Goals`, `Definition of Done`, `Generation Metadata`, optional `Detection Notes`, optional `Guided Inputs`, and a trailing `Maintainer Notes` with the manual-managed marker.
+- Given `minispec/project.md` exists, When `project` runs, Then auto-managed sections are refreshed, `Maintainer Notes` content is preserved verbatim, and a `.bak.<YYYYMMDDHHmmss>` copy is written.
+- Given stack detection is uncertain, When `project` runs, Then fields fall back to `TBD` placeholders instead of guessing.
+
+### new
+
+Inputs: a free-form `<idea>` or scope description.
+
+- Given the workspace has `minispec/project.md` and `minispec/templates/change.md`, When `new` runs, Then exactly one file is created at `minispec/changes/<YYYYMMDD-slug>.md` based on the template.
+- Given the change card is populated, When reviewed, Then `Why`, `Scope`, `Acceptance`, and an initial `Plan` are all filled; `status` in frontmatter is `draft`.
+
+### apply
+
+Inputs: `<change-id>`.
+
+- Given an active card `minispec/changes/<id>.md`, When `apply` runs, Then only tasks listed in the card's `Plan` are executed; completed tasks are ticked `- [x]`.
+- Given scope shifts mid-flight, When continuing `apply`, Then `Scope` is updated and one matching `Acceptance` item is added before new code is written.
+- Given any task in `Plan` is incomplete, When `apply` finishes, Then the card is NOT moved to archive; closing happens in a separate `close` action.
+
+### check
+
+Inputs: `<change-id>`.
+
+- Given `minispec/project.md` defines `Test` and `Lint`, When `check` runs, Then those commands are executed and their results are appended under the card's `Notes` section.
+- Given every `Acceptance` item has evidence of passing, When `check` finishes, Then status may advance toward `closed`; otherwise status stays at `draft` or `in_progress`.
+
+### analyze
+
+Inputs: mode (`quick` | `normal` | `deep`), optional `[root]`.
+
+- Given mode is `quick`, When `analyze` runs, Then `minispec/specs/project-map.md` is refreshed and `minispec/specs/README.md` is updated with an analysis snapshot.
+- Given mode is `normal`, When `analyze` runs, Then additionally `minispec/specs/subprojects.md` is produced.
+- Given mode is `deep`, When `analyze` runs, Then additionally `minispec/specs/logic-deep-dive.md` is produced with hotspot analysis flagged as heuristic.
+- Given `minispec/specs/README.md` has a `## Maintainer Notes` section, When `analyze` rewrites the file, Then that section's content is preserved.
+
+### close
+
+Inputs: `<change-id>`, `<domain>`.
+
+- Given the card's `Acceptance` section has any `- [ ]` line, When `close` is invoked, Then it fails with an error message pointing to Acceptance, and the card stays in `minispec/changes/`. `Plan` unchecked items MUST NOT block close.
+- Given Acceptance is fully ticked, When `close` runs, Then `Why`, `Scope`, `Acceptance`, and `Notes` are appended to `minispec/specs/<domain>.md` under a new `## Change <id> (<date>)` heading; `Plan` and `Risks and Rollback` are not copied into the spec.
+- Given the merged spec block is written, When inspected, Then the first Notes lines include `Auto-merged from \`minispec/changes/<id>.md\`` and `See \`minispec/archive/<id>.md\` for plan and risk notes.`.
+- Given merge succeeds, When close continues, Then frontmatter `status` in the change file becomes `closed` and the file is moved to `minispec/archive/<id>.md`.
+- Given the target archive path already exists OR the spec already contains `## Change <id>`, When `close` is invoked, Then it fails before any move or append happens.
+
+## Parity Invariants
+
+- `scripts/ms-close.sh` and `scripts/ms-close.ps1` MUST produce byte-equivalent Notes merge blocks (modulo line-ending conventions) for the same input card.
+- `scripts/ms-project.sh` and `scripts/ms-project.ps1` MUST emit the same Stack/Commands/Framework detection for a given repository, given identical package/lockfile layouts.
+- `scripts/ms-doctor.sh` and `scripts/ms-doctor.ps1` MUST emit the same set of `[WARN]` and `[OK]` lines (modulo ordering) for the same repository state.
+
+## Maintainer Notes
+
+<!-- manual-managed; preserved when this file is regenerated by analyze -->
+
+- This spec is the single source of truth for action semantics; when SKILL rules or script behavior changes, update this file in the same card.
+
+## Change 20260422-p1-dogfood-project-and-workflow-spec (2026-04-22)
+
+### Why
+
+仓库自带的 `minispec/project.md` 仍是全 `TBD` 的初始模板，且 `minispec/specs/` 里只有 `README.md` 的占位，没有任何 domain spec。这让"这个工具怎么用自己"的回答缺失——`ms-doctor` 会一直因 `TBD` 报 WARN（P1-d 新增的语义检查）；潜在贡献者也看不到 minispec 如何描述自身约束。
+
+本卡把 project.md 改写成描述 minispec 自身（POSIX sh + PowerShell 7 + Markdown，约束是双实现 parity、零 runtime 依赖），并新增 `minispec/specs/workflow.md` 作为 6-action workflow 的自描述 spec。
+
+### Scope
+
+- In:
+  - 改写 `minispec/project.md`：
+    - Stack 填真实栈（POSIX sh、PowerShell 7+、Markdown）。
+    - Commands 填真实命令（Install = 无；Build = 无；Test = `sh scripts/ms-doctor.sh .`；Lint = `shellcheck scripts/*.sh` + `pwsh -NoProfile -Command "Invoke-ScriptAnalyzer -Path scripts/*.ps1"`）。
+    - Engineering Constraints / Non-Goals / Definition of Done 按 minispec 自身场景写。
+    - 保留（或补写）Maintainer Notes 段用 P1-b 的 marker。
+  - 新建 `minispec/specs/workflow.md`：
+    - 用 Given/When/Then 形式描述 6 个 action 的行为契约（Inputs、关键判定、失败条件）。
+    - 结构与其他 domain spec 对齐（close 之后会在文件末尾 append `## Change ...` 块）。
+- Out:
+  - 不修改脚本（本卡只是用它）。
+  - 不补历史 archive 卡。
+
+### Acceptance
+
+- [x] Given 运行 `sh scripts/ms-doctor.sh .`，When 读取 Semantic checks 输出，Then 不再出现 `still contains TBD placeholders`。
+- [x] Given 打开 `minispec/project.md`，Then `## Stack` 与 `## Commands` 所有字段都有具体值（无 `TBD`）。
+- [x] Given 打开 `minispec/project.md`，Then 末尾存在 `## Maintainer Notes` 段与 manual-managed marker 注释。
+- [x] Given 打开 `minispec/specs/workflow.md`，Then 存在 6 个 `### <action>` 子段，每段包含至少一个 `Given/When/Then` 三元组。
+- [x] Given 对本卡执行 `ms-close.sh <id> workflow .`，Then 合并块 append 到 `minispec/specs/workflow.md`，且原有 workflow 规则段保留。
+
+### Notes
+- Auto-merged from `minispec/changes/20260422-p1-dogfood-project-and-workflow-spec.md`
+- See `minispec/archive/20260422-p1-dogfood-project-and-workflow-spec.md` for plan and risk notes.
+
+- 决策：`Test` 命令选 `ms-doctor` 而不是"跑一组 bats/Pester 测试"——后者在 P2-2 引入；当前 minispec 的"测试"只是结构 + 语义检查。
+- 决策：workflow.md 的 BDD 三元组面向 agent 与人类共读，先于实现的细节——脚本与 SKILL 都应该符合这些契约。

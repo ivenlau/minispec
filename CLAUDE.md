@@ -1,15 +1,17 @@
 # CLAUDE
 
-Use minispec as default delivery workflow for behavior changes.
+Use minispec as the default delivery workflow for behavior changes.
 
 ## Workflow Contract
 
-1. Create or refresh a change card in `minispec/changes/`.
-2. Implement only accepted scope.
-3. Validate acceptance items and tests.
-4. Update `minispec/specs/` and archive on completion.
+Execute these six actions in order for any behavior change:
 
-Before first change in a repository, run `project` to generate or refresh `minispec/project.md`.
+1. `project` — generate or refresh `minispec/project.md` (run once before the first change, re-run when stack or commands change).
+2. `new` — create a change card in `minispec/changes/` from `minispec/templates/change.md` and fill Why / Scope / Acceptance / Plan.
+3. `apply` — implement only the planned, accepted scope; tick Plan checkboxes as you go.
+4. `check` — validate each Acceptance item; run project `Test` and `Lint` commands; record outcomes in Notes.
+5. `analyze` — on demand (`quick` | `normal` | `deep`), refresh canonical analysis docs under `minispec/specs/`.
+6. `close` — merge the change into `minispec/specs/<domain>.md`, set `status: closed`, move card to `minispec/archive/`.
 
 ## Skill
 
@@ -19,6 +21,8 @@ Before first change in a repository, run `project` to generate or refresh `minis
 
 - `minispec/project.md`
 - `minispec/specs/`
+- `minispec/changes/`
+- `minispec/archive/`
 - `minispec/templates/change.md`
 
 ## Exception Rule

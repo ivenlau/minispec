@@ -3,15 +3,15 @@ name: minispec
 description: Lightweight spec-first workflow for coding tasks.
 ---
 
-<!-- canonical source: minispec/SKILL.md; keep mirrors' `## Guardrails` in sync. -->
+# minispec (canonical SKILL)
 
-# minispec
+This file is the **canonical source** for the minispec skill. Platform-specific skill entries at `.claude/skills/minispec/SKILL.md` and `.agents/skills/minispec/SKILL.md` are mirrors — their `## Guardrails` section MUST match this file verbatim (see `ms-doctor` semantic check).
 
-Lightweight spec-first workflow for coding tasks.
+When adapting minispec to a new AI CLI platform, copy the relevant sections into that platform's expected skill path and keep the Guardrails identical.
 
 ## Trigger
 
-Use this skill when user asks to plan or implement a code change and wants small, clear, acceptance-based execution.
+Use this skill when the user asks to plan or implement a code change and wants small, clear, acceptance-based execution.
 
 ## Required Context
 

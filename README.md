@@ -1,23 +1,96 @@
 # minispec
 
+Language: **English** | [简体中文](README.zh-CN.md)
+
 minispec is a lightweight spec-first workflow for AI coding tools.
-It is designed to run with no extra CLI and no dependency install.
+It scaffolds a tiny, markdown-only contract (`project.md` + `specs/` + `changes/` + `archive/`) and teaches your AI agent — Claude Code, Codex, etc. — how to make changes through it.
+
+## Install
+
+### Linux / macOS / WSL / git-bash
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ivenlau/minispec/main/install.sh | sh
+```
+
+### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/ivenlau/minispec/main/install.ps1 | iex
+```
+
+Both installers drop minispec into your user directory (no sudo, no elevation) and put a `minispec` command on your PATH. If `~/.local/bin` (Linux/macOS) is not on your PATH, the installer prints the exact line to add to your shell rc. On Windows, open a new terminal after install so the PATH refresh takes effect.
+
+Verify:
+
+```sh
+minispec --version
+```
+
+## Quickstart
+
+Three steps from a fresh directory to your first AI-driven change:
+
+```sh
+cd my-project
+minispec init .                                    # scaffold the contract + AI skill files
+minispec project . auto "TypeScript Next.js app"   # generate minispec/project.md (auto-detect + context hint)
+```
+
+Then open your AI CLI (Claude Code or Codex) in `my-project/` and ask:
+
+```
+minispec new add checkout rate-limit
+minispec apply 20260422-checkout-rate-limit
+minispec check 20260422-checkout-rate-limit
+minispec close 20260422-checkout-rate-limit checkout
+```
+
+The agent will read `AGENTS.md` / `CLAUDE.md` and the SKILL files that `init` dropped into `.agents/` and `.claude/`, create a change card in `minispec/changes/`, implement the plan, validate, and finally merge the change into `minispec/specs/checkout.md`.
 
 ## Workflow
 
-1. `project`: Generate or refresh `project.md`.
-2. `new`: Create a change card from an idea.
-3. `apply`: Implement tasks from the change card.
-4. `check`: Validate acceptance criteria and test commands.
-5. `analyze`: In Code CLI, analyze repository context and sync `minispec/specs/README.md` plus referenced docs.
-6. `close`: Merge final behavior into `specs/` and archive the change.
+1. `project`: Generate or refresh `project.md`. _(agent-preferred; script fallback: `scripts/ms-project.*`)_
+2. `new`: Create a change card from an idea. _(agent-driven only)_
+3. `apply`: Implement tasks from the change card. _(agent-driven only)_
+4. `check`: Validate acceptance criteria and test commands. _(agent-driven only)_
+5. `analyze`: In Code CLI, analyze repository context and sync `minispec/specs/README.md` plus referenced docs. _(agent-driven only)_
+6. `close`: Merge final behavior into `specs/` and archive the change. _(agent-preferred; script fallback: `scripts/ms-close.*`)_
+
+### CLI Syntax
+
+All actions share the same shape regardless of AI CLI (Codex, Claude, …):
+
+```text
+minispec <action> [root] [mode] [context...]
+```
+
+- `<action>`: one of `project`, `new`, `apply`, `check`, `analyze`, `close`.
+- `[root]`: optional repo root, defaults to `.`.
+- `[mode]`: optional action-specific mode (for `project`: `auto` | `existing` | `new`; for `analyze`: `quick` | `normal` | `deep`).
+- `[context...]`: remaining free-form tokens passed as context to the action.
+
+You can omit `root` and `mode` — most examples in this README do.
 
 ## Utility Scripts
 
-- `scripts/ms-init.sh` / `scripts/ms-init.ps1`: create minispec folders and scaffold baseline files.
-- `scripts/ms-doctor.sh` / `scripts/ms-doctor.ps1`: verify required structure.
-- `scripts/ms-project.sh` / `scripts/ms-project.ps1`: optional helper to auto-generate `minispec/project.md` when scripts are available.
-- `scripts/ms-close.sh` / `scripts/ms-close.ps1`: close a change card and auto-merge into one domain spec.
+Scripts are a **fallback path for environments without an AI agent** (CI jobs, offline bootstrapping, manual use). When an AI agent is available, prefer executing the action in-context — the agent has richer judgment about stack detection and section merging. Both paths write to the same on-disk contract.
+
+- `scripts/ms-init.sh` / `scripts/ms-init.ps1`: create minispec folders and scaffold baseline files. _(primary path — always script-driven)_
+- `scripts/ms-doctor.sh` / `scripts/ms-doctor.ps1`: verify required structure. _(primary path — always script-driven)_
+- `scripts/ms-project.sh` / `scripts/ms-project.ps1`: auto-generate `minispec/project.md`. _(fallback; agents should prefer in-context generation)_
+- `scripts/ms-close.sh` / `scripts/ms-close.ps1`: close a change card and auto-merge into one domain spec. _(fallback; agents should prefer in-context close)_
+Once `minispec` is on your PATH (see [Install](#install)), prefer the global command over calling these scripts directly:
+
+| CLI command              | Underlying script                          |
+|--------------------------|--------------------------------------------|
+| `minispec init <dir>`    | `scripts/ms-init.sh` / `scripts/ms-init.ps1` |
+| `minispec doctor [<dir>]`| `scripts/ms-doctor.sh` / `scripts/ms-doctor.ps1` |
+| `minispec project ...`   | `scripts/ms-project.sh` / `scripts/ms-project.ps1` |
+| `minispec close <id> <domain> [<dir>]` | `scripts/ms-close.sh` / `scripts/ms-close.ps1` |
+| `minispec --version`     | reads `VERSION` at the install share dir   |
+
+The scripts are still useful for CI or offline environments where the global CLI is not installed.
 
 POSIX shell examples:
 
@@ -107,24 +180,17 @@ Detected commands are best-effort. Confirm `Install`, `Build`, `Test`, and `Lint
 
 ### C. Use In AI CLI (Codex/Claude)
 
+The action commands are identical across environments — only the entry files and skill path differ.
+
 1. Run in Codex.
 
 Ensure repo contains `AGENTS.md` and `.agents/skills/minispec/SKILL.md`.
-
-Ask agent to run minispec actions:
-
-- `minispec project . auto nextjs saas app`
-- `minispec new add refund filter`
-- `minispec apply 20260323-refund-filter`
-- `minispec check 20260323-refund-filter`
-- `minispec analyze deep .`
-- `minispec close 20260323-refund-filter`
 
 2. Run in Claude Code.
 
 Ensure repo contains `CLAUDE.md` and `.claude/skills/minispec/SKILL.md`.
 
-Trigger the same actions through the minispec skill:
+In either environment, ask the agent to run the same commands:
 
 - `minispec project nextjs saas app`
 - `minispec new add refund filter`
@@ -132,6 +198,8 @@ Trigger the same actions through the minispec skill:
 - `minispec check 20260323-refund-filter`
 - `minispec analyze deep`
 - `minispec close 20260323-refund-filter`
+
+If you want to pin `root` and `mode` explicitly, use the longer form, e.g. `minispec project . auto nextjs saas app` or `minispec analyze deep .`.
 
 ### D. Close Criteria
 
@@ -178,6 +246,40 @@ Mode definitions:
 - `quick`: project-level overview.
 - `normal`: project + subproject/module boundaries.
 - `deep`: project + subprojects + logic hotspot analysis.
+
+## Repo layout vs adopted-project layout
+
+This repo's outer directory is `minispec/`. Inside, there is a nested `minispec/` that holds the contract (project.md, specs, changes, archive, templates). When a downstream project adopts minispec via `scripts/ms-init.sh`, it gets the same contract directory inside its own repo — under whatever its repo name is — not a doubled `minispec/minispec/`.
+
+This repo (template source):
+
+```text
+minispec/                     # repo root (happens to be called minispec)
+├── AGENTS.md
+├── CLAUDE.md
+├── README.md
+├── minispec/                 # the contract directory (this is what ms-init copies)
+│   ├── project.md
+│   ├── specs/
+│   ├── changes/
+│   ├── archive/
+│   └── templates/
+├── .agents/ .claude/         # platform skill entries
+└── scripts/                  # fallback scripts
+```
+
+A project that adopted minispec via `ms-init`:
+
+```text
+my-app/                       # any downstream repo
+├── AGENTS.md and/or CLAUDE.md
+├── minispec/                 # only one level — the contract lives here
+│   ├── project.md
+│   ├── specs/
+│   ├── changes/
+│   └── archive/
+└── src/ ...                  # the rest of the project
+```
 
 ## Directory Layout
 

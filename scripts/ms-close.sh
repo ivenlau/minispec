@@ -20,11 +20,6 @@ if [ ! -f "$CHANGE_PATH" ]; then
   exit 1
 fi
 
-if grep -Eq '^[[:space:]]*-[[:space:]]*\[[[:space:]]\][[:space:]]+' "$CHANGE_PATH"; then
-  echo "Cannot close change. Acceptance or plan contains unchecked items." >&2
-  exit 1
-fi
-
 extract_section() {
   heading="$1"
   file="$2"
@@ -34,6 +29,12 @@ extract_section() {
     in_section { print }
   ' "$file"
 }
+
+ACCEPTANCE_BLOCK="$(extract_section "Acceptance" "$CHANGE_PATH")"
+if printf '%s' "$ACCEPTANCE_BLOCK" | grep -Eq '^[[:space:]]*-[[:space:]]*\[[[:space:]]\][[:space:]]+'; then
+  echo "Cannot close change. Acceptance section has unchecked items." >&2
+  exit 1
+fi
 
 trim_trailing_blank_lines() {
   awk '
@@ -83,6 +84,7 @@ fi
   echo
   echo "### Notes"
   echo "- Auto-merged from \`minispec/changes/$CHANGE_ID.md\`"
+  echo "- See \`minispec/archive/$CHANGE_ID.md\` for plan and risk notes."
   if [ -n "$NOTES" ]; then
     printf '%s\n' "$NOTES"
   else

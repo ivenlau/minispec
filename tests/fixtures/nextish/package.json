@@ -1,0 +1,8 @@
+{
+  "name": "nextish-fixture",
+  "version": "0.0.1",
+  "dependencies": {
+    "next-sitemap": "^4.0.0",
+    "react-next-helpers": "^1.0.0"
+  }
+}
