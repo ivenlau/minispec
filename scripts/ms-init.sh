@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 set -eu
+unset CDPATH
 
 ROOT="."
 WRITE_GITIGNORE=1
@@ -25,8 +26,8 @@ EOF
   esac
 done
 
-SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 
 if [ ! -d "$ROOT" ]; then
   mkdir -p "$ROOT"

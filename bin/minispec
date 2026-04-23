@@ -6,6 +6,7 @@
 #   2. <this-script-dir>/../share/minispec  (when installed under a <prefix>/bin layout).
 #   3. <this-script-dir>/..                 (when running inside the source repo, bin/ sibling to scripts/).
 set -eu
+unset CDPATH
 
 self="$0"
 # Follow symlinks so /usr/local/bin/minispec -> ~/.local/... still resolves correctly.
@@ -16,14 +17,14 @@ while [ -L "$self" ]; do
     *)  self="$(dirname "$self")/$link" ;;
   esac
 done
-self_dir="$(CDPATH= cd -- "$(dirname -- "$self")" && pwd)"
+self_dir="$(cd -- "$(dirname -- "$self")" && pwd)"
 
 if [ -n "${MINISPEC_HOME:-}" ] && [ -d "$MINISPEC_HOME/scripts" ]; then
   share_dir="$MINISPEC_HOME"
 elif [ -d "$self_dir/../share/minispec/scripts" ]; then
-  share_dir="$(CDPATH= cd -- "$self_dir/../share/minispec" && pwd)"
+  share_dir="$(cd -- "$self_dir/../share/minispec" && pwd)"
 elif [ -d "$self_dir/../scripts" ] && [ -d "$self_dir/../minispec" ]; then
-  share_dir="$(CDPATH= cd -- "$self_dir/.." && pwd)"
+  share_dir="$(cd -- "$self_dir/.." && pwd)"
 else
   echo "minispec: cannot locate install root. Set MINISPEC_HOME or reinstall." >&2
   exit 1

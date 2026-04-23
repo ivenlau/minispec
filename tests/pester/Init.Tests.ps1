@@ -3,16 +3,16 @@ BeforeAll {
   $script:InitPath = Join-Path $RepoRoot "scripts/ms-init.ps1"
 }
 
-BeforeEach {
-  $script:TestRoot = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().Guid)
-  New-Item -ItemType Directory -Path $TestRoot -Force | Out-Null
-}
-
-AfterEach {
-  if (Test-Path $TestRoot) { Remove-Item -Recurse -Force $TestRoot }
-}
-
 Describe "ms-init.ps1" {
+  BeforeEach {
+    $script:TestRoot = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().Guid)
+    New-Item -ItemType Directory -Path $TestRoot -Force | Out-Null
+  }
+
+  AfterEach {
+    if (Test-Path $TestRoot) { Remove-Item -Recurse -Force $TestRoot }
+  }
+
   It "scaffolds the contract tree" {
     & pwsh -NoProfile -ExecutionPolicy Bypass -File $InitPath -Root $TestRoot | Out-Null
     (Test-Path (Join-Path $TestRoot "minispec/specs")) | Should -Be $true

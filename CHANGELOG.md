@@ -37,5 +37,7 @@ All notable changes to minispec are documented here. Format follows [Keep a Chan
 - Merged-spec Notes blocks now include a `See minispec/archive/<id>.md for plan and risk notes.` cross-reference.
 
 ### Fixed
+- CI (`lint` job): `scripts/ms-init.sh` and `bin/minispec` no longer use the `CDPATH= cd …` prefix-assignment pattern that shellcheck flagged as SC1007 (ambiguous with a misspaced assignment). Both scripts now `unset CDPATH` once at the top, then use plain `cd -- …`.
+- CI (`test-pester` job): `Doctor.Tests.ps1`, `Close.Tests.ps1`, `Init.Tests.ps1` and `Project.Tests.ps1` move `BeforeEach` / `AfterEach` inside their `Describe` blocks (Pester v5 rejects them at the root of a test file). `Project.Tests.ps1` consolidates into a single `Describe "ms-project.ps1"` with `Context "detection"` and `Context "Maintainer Notes"` so setup/teardown are shared.
 - `scripts/ms-close.ps1` no longer relies on PowerShell's backtick-following-non-special-char coincidence inside its merge here-string.
 - "No script dependency" ambiguity in SKILLs replaced with explicit "prefer in-context generation; fall back to the script only without an AI agent."

@@ -3,21 +3,21 @@ BeforeAll {
   $script:DoctorPath = Join-Path $RepoRoot "scripts/ms-doctor.ps1"
 }
 
-BeforeEach {
-  $script:TestRoot = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().Guid)
-  New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/specs") -Force | Out-Null
-  New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/changes") -Force | Out-Null
-  New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/archive") -Force | Out-Null
-  New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/templates") -Force | Out-Null
-  "# Project Contract`n`n## Stack`n- Language: TBD`n" | Set-Content -Path (Join-Path $TestRoot "minispec/project.md") -Encoding UTF8
-  Copy-Item (Join-Path $RepoRoot "minispec/templates/change.md") (Join-Path $TestRoot "minispec/templates/change.md")
-}
-
-AfterEach {
-  if (Test-Path $TestRoot) { Remove-Item -Recurse -Force $TestRoot }
-}
-
 Describe "ms-doctor.ps1" {
+  BeforeEach {
+    $script:TestRoot = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().Guid)
+    New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/specs") -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/changes") -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/archive") -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/templates") -Force | Out-Null
+    "# Project Contract`n`n## Stack`n- Language: TBD`n" | Set-Content -Path (Join-Path $TestRoot "minispec/project.md") -Encoding UTF8
+    Copy-Item (Join-Path $RepoRoot "minispec/templates/change.md") (Join-Path $TestRoot "minispec/templates/change.md")
+  }
+
+  AfterEach {
+    if (Test-Path $TestRoot) { Remove-Item -Recurse -Force $TestRoot }
+  }
+
   It "fails fast when minispec root is missing" {
     Remove-Item -Recurse -Force (Join-Path $TestRoot "minispec")
     $output = & pwsh -NoProfile -ExecutionPolicy Bypass -File $DoctorPath -Root $TestRoot

@@ -3,25 +3,25 @@ BeforeAll {
   $script:ClosePath = Join-Path $RepoRoot "scripts/ms-close.ps1"
 }
 
-BeforeEach {
-  $script:TestRoot = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().Guid)
-  New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/specs") -Force | Out-Null
-  New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/changes") -Force | Out-Null
-  New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/archive") -Force | Out-Null
-}
-
-AfterEach {
-  if (Test-Path $TestRoot) { Remove-Item -Recurse -Force $TestRoot }
-}
-
-function New-TestCard {
-  param([string]$Id, [string]$Body)
-  $path = Join-Path $TestRoot "minispec/changes/$Id.md"
-  $Body | Set-Content -Path $path -Encoding UTF8
-  return $path
-}
-
 Describe "ms-close.ps1" {
+  BeforeEach {
+    $script:TestRoot = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().Guid)
+    New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/specs") -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/changes") -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $TestRoot "minispec/archive") -Force | Out-Null
+  }
+
+  AfterEach {
+    if (Test-Path $TestRoot) { Remove-Item -Recurse -Force $TestRoot }
+  }
+
+  function New-TestCard {
+    param([string]$Id, [string]$Body)
+    $path = Join-Path $TestRoot "minispec/changes/$Id.md"
+    $Body | Set-Content -Path $path -Encoding UTF8
+    return $path
+  }
+
   It "succeeds when Acceptance is ticked (Plan unchecked)" {
     New-TestCard -Id "20260422-case-a" -Body @"
 ---
