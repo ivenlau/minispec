@@ -98,8 +98,20 @@ switch -Regex ($action) {
     exit 0
   }
   '^init$' {
-    $rootArg = if ($rest.Count -gt 0) { $rest[0] } else { "." }
-    & (Join-Path $scriptsDir "ms-init.ps1") -Root $rootArg
+    $targetRoot = "."
+    $noGit = $false
+    foreach ($t in $rest) {
+      if ($t -eq "--no-gitignore" -or $t -eq "-NoGitignore") {
+        $noGit = $true
+      } elseif (-not $t.StartsWith("-")) {
+        $targetRoot = $t
+      }
+    }
+    if ($noGit) {
+      & (Join-Path $scriptsDir "ms-init.ps1") -Root $targetRoot -NoGitignore
+    } else {
+      & (Join-Path $scriptsDir "ms-init.ps1") -Root $targetRoot
+    }
     exit $LASTEXITCODE
   }
   '^doctor$' {

@@ -1,13 +1,55 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT="${1:-.}"
+ROOT="."
+WRITE_GITIGNORE=1
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --no-gitignore) WRITE_GITIGNORE=0; shift ;;
+    --) shift; break ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: ms-init.sh [<target-dir>] [--no-gitignore]
+
+Scaffolds a minispec contract (minispec/, .agents/, .claude/, AGENTS.md,
+CLAUDE.md) into <target-dir> (default: .). By default, appends a marker
+block to <target-dir>/.gitignore so the scaffolded files stay out of git.
+
+Options:
+  --no-gitignore   Skip the .gitignore write on this run.
+EOF
+      exit 0
+      ;;
+    -*) echo "ms-init.sh: unknown option '$1'" >&2; exit 1 ;;
+    *)  ROOT="$1"; shift ;;
+  esac
+done
+
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 
 if [ ! -d "$ROOT" ]; then
   mkdir -p "$ROOT"
 fi
+
+write_minispec_gitignore() {
+  gi="$ROOT/.gitignore"
+  if [ -f "$gi" ] && grep -q '^# >>> minispec' "$gi"; then
+    return 0
+  fi
+  cat >> "$gi" <<'GITIGNORE_EOF'
+
+# >>> minispec — dev-local scaffolding (added by `minispec init`) >>>
+# Remove this block to commit minispec files and track change history in
+# git alongside your code. See README for details.
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+minispec/
+# <<< minispec <<<
+GITIGNORE_EOF
+}
 
 ensure_text_file() {
   rel_path="$1"
@@ -98,4 +140,11 @@ Lightweight spec-first workflow for code changes."
 ensure_text_file "AGENTS.md" "AGENTS.md" "# AGENTS"
 ensure_text_file "CLAUDE.md" "CLAUDE.md" "# CLAUDE"
 
+if [ "$WRITE_GITIGNORE" -eq 1 ]; then
+  write_minispec_gitignore
+fi
+
 echo "minispec directories and scaffold files ensured at: $ROOT"
+if [ "$WRITE_GITIGNORE" -eq 1 ]; then
+  echo "  .gitignore updated (pass --no-gitignore to skip)"
+fi

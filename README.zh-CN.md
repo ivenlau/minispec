@@ -34,9 +34,11 @@ minispec --version
 
 ```sh
 cd my-project
-minispec init .                                         # 初始化契约与 AI skill 文件
+minispec init .                                         # 初始化契约与 AI skill 文件（同时把 minispec 从 git 屏蔽——见下文）
 minispec project . auto "TypeScript Next.js app"        # 生成 minispec/project.md（自动检测 + 上下文提示）
 ```
+
+如果你想自己管 `.gitignore`，给 `init` 加 `--no-gitignore`。
 
 然后在 `my-project/` 里启动你的 AI CLI（Claude Code / Codex），让它跑：
 
@@ -59,6 +61,34 @@ Agent 会读取 init 放进 `.agents/` 与 `.claude/` 的 SKILL 文件，创建 
 | domain | 领域 | close 时把变更合并进入的 spec 文件名（如 `scripts`、`docs`） |
 | archive | 归档 | 关卡后 change card 的最终归属目录 `minispec/archive/` |
 | guardrails | 底线 | SKILL 中定义的不可越界规则 |
+
+## 将 minispec 纳入 / 排除在 git 之外
+
+**默认：开发者本地模式。** `minispec init` 把 minispec 视为本地工具，会在目标项目的 `.gitignore` 里追加一段带 marker 的块，屏蔽 `AGENTS.md`、`CLAUDE.md`、`.agents/`、`.claude/`、`minispec/`。你的产品 git 历史只盯着产品代码，minispec 的契约文件在磁盘上存在但对 `git add` 隐形。
+
+块的结构（任何时候都能手动编辑）：
+
+```gitignore
+# >>> minispec — dev-local scaffolding (added by `minispec init`) >>>
+# Remove this block to commit minispec files and track change history in
+# git alongside your code. See README for details.
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+minispec/
+# <<< minispec <<<
+```
+
+**单次跳过** — 只想这一次 init 不写 `.gitignore`，加 `--no-gitignore`：
+
+```sh
+minispec init --no-gitignore .
+```
+
+**切回团队模式**（把 minispec 和代码一起 commit，这样 clone 仓库的同事自动继承 workflow、AI skill、变更史）：删掉 `.gitignore` 里的 marker 块，然后 `git add AGENTS.md CLAUDE.md .agents .claude minispec`。
+
+幂等：对同一目录再跑一次 `minispec init` 不会重复写入 marker 块。
 
 ## 工作流
 

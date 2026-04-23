@@ -1,11 +1,36 @@
 param(
-  [string]$Root = "."
+  [string]$Root = ".",
+  [switch]$NoGitignore
 )
 
 $ErrorActionPreference = "Stop"
 
 if (-not (Test-Path $Root)) {
   New-Item -ItemType Directory -Path $Root | Out-Null
+}
+
+function Write-MinispecGitignore {
+  param([string]$TargetRoot)
+  $gi = Join-Path $TargetRoot ".gitignore"
+  if (Test-Path $gi) {
+    $existing = Get-Content -Path $gi -Raw -Encoding UTF8
+    if ($existing -match '(?m)^# >>> minispec') {
+      return
+    }
+  }
+  $block = @'
+
+# >>> minispec — dev-local scaffolding (added by `minispec init`) >>>
+# Remove this block to commit minispec files and track change history in
+# git alongside your code. See README for details.
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+minispec/
+# <<< minispec <<<
+'@
+  Add-Content -Path $gi -Value $block -Encoding UTF8
 }
 
 $rootPath = Resolve-Path $Root
@@ -126,4 +151,11 @@ Ensure-TextFile -RootPath $rootPath -RelativePath "CLAUDE.md" -SourceRelativePat
 # CLAUDE
 '@
 
+if (-not $NoGitignore) {
+  Write-MinispecGitignore -TargetRoot $rootPath
+}
+
 Write-Output "minispec directories and scaffold files ensured at: $rootPath"
+if (-not $NoGitignore) {
+  Write-Output "  .gitignore updated (pass -NoGitignore to skip)"
+}

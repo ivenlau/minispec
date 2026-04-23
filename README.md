@@ -33,9 +33,11 @@ Three steps from a fresh directory to your first AI-driven change:
 
 ```sh
 cd my-project
-minispec init .                                    # scaffold the contract + AI skill files
+minispec init .                                    # scaffold the contract + AI skill files (also hides minispec from git — see below)
 minispec project . auto "TypeScript Next.js app"   # generate minispec/project.md (auto-detect + context hint)
 ```
+
+Pass `--no-gitignore` to `init` if you want to manage `.gitignore` yourself.
 
 Then open your AI CLI (Claude Code or Codex) in `my-project/` and ask:
 
@@ -47,6 +49,34 @@ minispec close 20260422-checkout-rate-limit checkout
 ```
 
 The agent will read `AGENTS.md` / `CLAUDE.md` and the SKILL files that `init` dropped into `.agents/` and `.claude/`, create a change card in `minispec/changes/`, implement the plan, validate, and finally merge the change into `minispec/specs/checkout.md`.
+
+## Tracking minispec in git
+
+**Default: dev-local.** `minispec init` treats minispec as developer-local tooling. It appends a marker-wrapped block to the target project's `.gitignore` that hides `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, and `minispec/` from git. Your product git history stays focused on product code; minispec scaffolding lives on disk but is invisible to `git add`.
+
+The block looks like this (editable any time):
+
+```gitignore
+# >>> minispec — dev-local scaffolding (added by `minispec init`) >>>
+# Remove this block to commit minispec files and track change history in
+# git alongside your code. See README for details.
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+minispec/
+# <<< minispec <<<
+```
+
+**Opt out once** — pass `--no-gitignore` to skip the write on a specific `init` run:
+
+```sh
+minispec init --no-gitignore .
+```
+
+**Switch to team mode** (commit minispec alongside code so clones inherit the workflow, AI skills, and change history): delete the marker block from `.gitignore`, then `git add AGENTS.md CLAUDE.md .agents .claude minispec`.
+
+Idempotence — running `minispec init` again on the same target never duplicates the marker block.
 
 ## Workflow
 

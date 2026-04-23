@@ -4,7 +4,17 @@ Canonical shipped behavior for minispec's own 6-action workflow. This spec descr
 
 ## Actions Overview
 
-The workflow consists of six ordered actions: `project`, `new`, `apply`, `check`, `analyze`, `close`. `project` runs once per repository and whenever stack/commands change. Change-cards flow through `new` → `apply` → `check` → `close`; `analyze` is on-demand.
+The workflow consists of six ordered actions: `project`, `new`, `apply`, `check`, `analyze`, `close`. `project` runs once per repository and whenever stack/commands change. Change-cards flow through `new` → `apply` → `check` → `close`; `analyze` is on-demand. A `init` bootstrap step (see below) runs once per repository before `project`.
+
+## Bootstrap: init
+
+`init` is not one of the six workflow actions; it is the bootstrap script (`ms-init.sh` / `ms-init.ps1`) that scaffolds the contract directory into a target project and wires minispec into that project's `.gitignore` by default.
+
+- Given `ms-init` runs with target `<dir>`, Then `<dir>/minispec/{specs,changes,archive,templates}`, `<dir>/.agents/skills/minispec/SKILL.md`, `<dir>/.claude/skills/minispec/SKILL.md`, `<dir>/AGENTS.md`, and `<dir>/CLAUDE.md` are created (files copied from the install share directory when present, minimal defaults otherwise).
+- Given `ms-init` runs without `--no-gitignore` / `-NoGitignore`, Then a marker-wrapped block is appended to `<dir>/.gitignore` (file created if missing) hiding `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, and `minispec/` from git.
+- Given `ms-init` runs with `--no-gitignore` / `-NoGitignore`, Then `<dir>/.gitignore` is not created or modified.
+- Given a previous `ms-init` already installed the marker (the line `# >>> minispec` exists in `<dir>/.gitignore`), When `ms-init` runs again on the same target, Then the marker block is NOT appended a second time.
+- Given the user wants to commit minispec alongside their code (team mode), Then they remove the marker block from `<dir>/.gitignore` manually; `ms-init` does not undo its own ignore write.
 
 ### project
 
