@@ -25,6 +25,8 @@ All notable changes to minispec are documented here. Format follows [Keep a Chan
 - `scripts/minispec.sh` and `scripts/minispec.ps1` (superseded by `bin/minispec*`).
 
 ### Changed
+- `new` action (all three SKILL files + `specs/workflow.md`): the agent must now ask one clarifying question at a time to surface purpose/constraints/success criteria, and propose 2–3 named approaches with trade-offs before writing the change card. Single-reasonable-path problems skip the approach proposal and say so explicitly.
+- `minispec/templates/change.md`: adds a `# Approach` section between `# Why` and `# Scope` with a `Considered` / `Chosen` skeleton so each card records the approach rationale; Approach stays in the card and archive (not merged into the domain spec, consistent with how Plan and Risks are handled).
 - `ms-project.sh` / `.ps1` now agree on Next.js vs `next-sitemap` detection (exact dep-name match instead of substring grep on the sh side).
 - `ms-close.sh` / `.ps1` only block on unchecked items inside the `# Acceptance` section; Plan items no longer block close.
 - `ms-close.ps1` merge block rewritten with single-quoted here-string + `-f` placeholder formatting to remove the accidental-backtick dependency.

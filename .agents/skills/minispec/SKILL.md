@@ -33,9 +33,17 @@ Lightweight spec-first workflow for coding tasks.
 
 1. Read `minispec/project.md`.
 2. Read `minispec/specs/README.md` and related domain specs if they exist.
-3. Create one new file in `minispec/changes/` using `minispec/templates/change.md`.
-4. Fill `Why`, `Scope`, `Acceptance`, and an initial `Plan`.
-5. Keep it short and testable. Ask for missing critical details only when necessary.
+3. Clarify before committing — ask ONE question at a time:
+   - Surface purpose (what outcome the user wants), constraints (what must not change, what bounds scope), and success criteria (how we know it works).
+   - Don't batch 4 questions into one paragraph — back-and-forth is cheaper than misaligned assumption.
+   - Stop asking once `Why` / `Scope` / `Acceptance` can be written without guessing. If the problem has a single reasonable path, name it and move on.
+4. Propose 2–3 approaches:
+   - Name each briefly; list concrete trade-offs (cost, risk, maintenance, scope bleed) per approach; end with your recommendation and the decisive trade-off.
+   - Wait for the user's choice (or their explicit "go with your pick") before writing the card.
+   - If only one approach is reasonable, skip this step and say so in the card's `Approach` section.
+5. Create one new file in `minispec/changes/` using `minispec/templates/change.md`.
+6. Fill `Why`, `Approach`, `Scope`, `Acceptance`, and an initial `Plan`, all reflecting the chosen approach.
+7. Keep it short and testable.
 
 ## Action: project
 

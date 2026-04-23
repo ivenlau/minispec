@@ -8,6 +8,15 @@ owner: your-name
 
 Describe the problem and business impact in one short paragraph.
 
+# Approach
+
+- Considered:
+  - Option A: brief description and main trade-off.
+  - Option B: brief description and main trade-off.
+- Chosen: which option, and the decisive trade-off that picked it.
+
+If only one approach was reasonable, state that and name it; no need to invent alternatives.
+
 # Scope
 
 - In:

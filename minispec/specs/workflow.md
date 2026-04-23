@@ -19,7 +19,10 @@ Inputs: optional `[root]`, optional mode (`auto` | `existing` | `new`), optional
 Inputs: a free-form `<idea>` or scope description.
 
 - Given the workspace has `minispec/project.md` and `minispec/templates/change.md`, When `new` runs, Then exactly one file is created at `minispec/changes/<YYYYMMDD-slug>.md` based on the template.
-- Given the change card is populated, When reviewed, Then `Why`, `Scope`, `Acceptance`, and an initial `Plan` are all filled; `status` in frontmatter is `draft`.
+- Given the user's intent is ambiguous (purpose / constraints / success criteria not fully knowable from the request), When `new` runs, Then the agent asks ONE clarifying question at a time and waits for an answer before proceeding — no multi-question paragraphs, no guessing.
+- Given the problem admits more than one reasonable implementation, When `new` runs, Then the agent proposes 2–3 named approaches with per-approach trade-offs and a recommendation, and waits for the user's pick (or explicit delegation) before writing the card.
+- Given only one approach is reasonable, When `new` runs, Then the agent names it in the card's `Approach` section and moves on without fabricating alternatives.
+- Given the change card is populated, When reviewed, Then `Why`, `Approach`, `Scope`, `Acceptance`, and an initial `Plan` are all filled; `status` in frontmatter is `draft`.
 
 ### apply
 
