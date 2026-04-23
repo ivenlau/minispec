@@ -140,7 +140,9 @@ if [ -d "$ROOT/minispec/changes" ]; then
   done
 fi
 
-# SKILL Guardrails parity across canonical + mirrors
+# SKILL Guardrails parity across canonical + mirrors.
+# Direct content comparison (no hash tool dependency) — works on every POSIX
+# platform including macOS, which lacks sha256sum by default.
 skill_paths="$ROOT/minispec/SKILL.md $ROOT/.claude/skills/minispec/SKILL.md $ROOT/.agents/skills/minispec/SKILL.md"
 extract_guardrails() {
   awk '
@@ -149,16 +151,23 @@ extract_guardrails() {
     in_section { print }
   ' "$1"
 }
-guard_hashes=""
+guard_first=""
+guard_drift=0
 for sp in $skill_paths; do
   if [ -f "$sp" ]; then
-    h="$(extract_guardrails "$sp" | tr -d '\r' | sha256sum 2>/dev/null | awk '{print $1}')"
-    guard_hashes="${guard_hashes}${h}
-"
+    content="$(extract_guardrails "$sp" | tr -d '\r')"
+    if [ -z "$guard_first" ] && [ -z "$content" ]; then
+      continue
+    fi
+    if [ -z "$guard_first" ]; then
+      guard_first="$content"
+    elif [ "$guard_first" != "$content" ]; then
+      guard_drift=1
+      break
+    fi
   fi
 done
-unique_count=$(printf '%s' "$guard_hashes" | sed '/^$/d' | sort -u | wc -l | tr -d ' ')
-if [ "${unique_count:-0}" -gt 1 ]; then
+if [ "$guard_drift" -eq 1 ]; then
   sem_warn "SKILL files have out-of-sync '## Guardrails' sections (canonical: minispec/SKILL.md)."
 fi
 

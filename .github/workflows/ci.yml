@@ -39,15 +39,24 @@ jobs:
           }
 
   test-bats:
-    name: bats (POSIX shell)
-    runs-on: ubuntu-latest
+    name: bats (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install bats-core
+      - name: Install bats-core (ubuntu)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y bats
+
+      - name: Install bats-core (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install bats-core
 
       - name: Run bats
         run: bats tests/bats

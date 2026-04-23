@@ -55,3 +55,58 @@ EOF
   run sh "$REPO_ROOT/scripts/ms-doctor.sh" "$TEST_ROOT"
   [[ "$output" == *"no matching '## Change 20260422-orphan'"* ]]
 }
+
+@test "doctor does NOT WARN when all three SKILL Guardrails match" {
+  mkdir -p "$TEST_ROOT/.claude/skills/minispec" "$TEST_ROOT/.agents/skills/minispec"
+  for f in \
+    "$TEST_ROOT/minispec/SKILL.md" \
+    "$TEST_ROOT/.claude/skills/minispec/SKILL.md" \
+    "$TEST_ROOT/.agents/skills/minispec/SKILL.md"; do
+    cat > "$f" <<EOF
+# test skill
+
+## Guardrails
+
+- rule A
+- rule B
+EOF
+  done
+
+  run sh "$REPO_ROOT/scripts/ms-doctor.sh" "$TEST_ROOT"
+  [[ "$output" != *"out-of-sync '## Guardrails'"* ]]
+}
+
+@test "doctor WARNs when one SKILL Guardrails section drifts" {
+  mkdir -p "$TEST_ROOT/.claude/skills/minispec" "$TEST_ROOT/.agents/skills/minispec"
+
+  cat > "$TEST_ROOT/minispec/SKILL.md" <<EOF
+# canonical
+
+## Guardrails
+
+- rule A
+- rule B
+EOF
+
+  cat > "$TEST_ROOT/.claude/skills/minispec/SKILL.md" <<EOF
+# claude mirror
+
+## Guardrails
+
+- rule A
+- rule B
+EOF
+
+  cat > "$TEST_ROOT/.agents/skills/minispec/SKILL.md" <<EOF
+# agents mirror
+
+## Guardrails
+
+- rule A
+- rule B
+- rule C (drift)
+EOF
+
+  run sh "$REPO_ROOT/scripts/ms-doctor.sh" "$TEST_ROOT"
+  [[ "$output" == *"out-of-sync '## Guardrails'"* ]]
+}
