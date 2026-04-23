@@ -93,7 +93,7 @@ if (Test-Path $changesDir) {
     $rel = "minispec/changes/$($_.Name)"
 
     if ($bn -notmatch '^\d{8}-[a-z0-9-]+$') {
-      Write-SemWarn "$rel: filename does not match YYYYMMDD-slug pattern."
+      Write-SemWarn "${rel}: filename does not match YYYYMMDD-slug pattern."
     }
 
     $fileText = Get-Content -Path $_.FullName -Raw -Encoding UTF8
@@ -106,15 +106,15 @@ if (Test-Path $changesDir) {
     }
 
     if (-not $status) {
-      Write-SemWarn "$rel: frontmatter has no status field."
+      Write-SemWarn "${rel}: frontmatter has no status field."
     } elseif ($status -notin @('draft','in_progress','closed')) {
-      Write-SemWarn "$rel: unknown status '$status' (expected draft|in_progress|closed)."
+      Write-SemWarn "${rel}: unknown status '$status' (expected draft|in_progress|closed)."
     }
 
     if ($status -eq 'draft' -and $bn -match '^(\d{8})-') {
       $datePart = $Matches[1]
       if ($datePart -lt $cutoffDate) {
-        Write-SemWarn "$rel: draft since $datePart (>14 days); consider closing or updating."
+        Write-SemWarn "${rel}: draft since $datePart (>14 days); consider closing or updating."
       }
     }
   }

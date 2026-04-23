@@ -1,6 +1,14 @@
 BeforeAll {
   $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
   $script:ClosePath = Join-Path $RepoRoot "scripts/ms-close.ps1"
+
+  # Defined in BeforeAll so the function survives discovery → run phase
+  # transition. Helper just writes a change card under <root>/minispec/changes/.
+  function Write-TestCard {
+    param([string]$Root, [string]$Id, [string]$Body)
+    $path = Join-Path $Root "minispec/changes/$Id.md"
+    $Body | Set-Content -Path $path -Encoding UTF8
+  }
 }
 
 Describe "ms-close.ps1" {
@@ -15,15 +23,8 @@ Describe "ms-close.ps1" {
     if (Test-Path $TestRoot) { Remove-Item -Recurse -Force $TestRoot }
   }
 
-  function New-TestCard {
-    param([string]$Id, [string]$Body)
-    $path = Join-Path $TestRoot "minispec/changes/$Id.md"
-    $Body | Set-Content -Path $path -Encoding UTF8
-    return $path
-  }
-
   It "succeeds when Acceptance is ticked (Plan unchecked)" {
-    New-TestCard -Id "20260422-case-a" -Body @"
+    Write-TestCard -Root $TestRoot -Id "20260422-case-a" -Body @"
 ---
 id: 20260422-case-a
 status: draft
@@ -49,7 +50,7 @@ plan unchecked but acceptance checked should close.
   }
 
   It "fails when Acceptance has any unchecked item" {
-    New-TestCard -Id "20260422-case-b" -Body @"
+    Write-TestCard -Root $TestRoot -Id "20260422-case-b" -Body @"
 ---
 id: 20260422-case-b
 status: draft
@@ -70,7 +71,7 @@ status: draft
   }
 
   It "merged spec contains archive cross-reference line" {
-    New-TestCard -Id "20260422-case-c" -Body @"
+    Write-TestCard -Root $TestRoot -Id "20260422-case-c" -Body @"
 ---
 id: 20260422-case-c
 status: draft

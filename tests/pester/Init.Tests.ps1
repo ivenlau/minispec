@@ -26,10 +26,12 @@ Describe "ms-init.ps1" {
     & pwsh -NoProfile -ExecutionPolicy Bypass -File $InitPath -Root $TestRoot | Out-Null
     $gi = Join-Path $TestRoot ".gitignore"
     (Test-Path $gi) | Should -Be $true
-    $text = Get-Content -Raw -Path $gi
-    $text | Should -Match "(?m)^# >>> minispec"
-    $text | Should -Match "(?m)^minispec/$"
-    $text | Should -Match "(?m)^AGENTS\.md$"
+    # Split into trimmed lines so CRLF vs LF line endings don't break anchored regex.
+    $lines = (Get-Content -Path $gi -Encoding UTF8) | ForEach-Object { $_.TrimEnd() }
+    $lines | Should -Contain "minispec/"
+    $lines | Should -Contain "AGENTS.md"
+    $lines | Should -Contain ".claude/"
+    ($lines -join "`n") | Should -Match "# >>> minispec"
   }
 
   It "preserves existing .gitignore content" {
