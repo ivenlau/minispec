@@ -145,68 +145,128 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "& 'scripts/ms-close.ps1'
 1. Initialize folder structure and baseline files.
 
 ```sh
+minispec init .
+```
+
+Script fallback (no global CLI):
+
+```sh
 sh scripts/ms-init.sh .
 ```
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& 'scripts/ms-init.ps1' -Root ."
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ms-init.ps1 -Root .
 ```
 
-2. Generate `project.md` (guided or context-driven) directly.
+2. Generate `project.md` (guided or context-driven).
 
-Create or refresh `minispec/project.md` with these sections:
+Ask your AI CLI (Claude Code / Codex) to run:
 
-- `## Stack` (`Language`, `Framework`, `Runtime`) [auto-filled by CLI]
-- `## Commands` (`Install`, `Build`, `Test`, `Lint`) [auto-filled by CLI]
-- `## Engineering Constraints` [manual-maintained]
-- `## Non-Goals` [manual-maintained]
-- `## Definition of Done` [manual-maintained]
-- `## Generation Metadata` [auto-filled by CLI]
-- `## Guided Inputs` [auto-filled when unresolved]
-- Optional `## Maintainer Notes` [manual-maintained]
+```sh
+minispec project . auto "TypeScript Next.js app"
+```
 
-If stack detection is uncertain, keep explicit `TBD` placeholders instead of guessing.
+The agent reads the skill, auto-detects what it can from your project files (package.json / pyproject.toml / go.mod / etc.), fills unknown fields as `TBD`, and writes `minispec/project.md` with these sections:
+
+- `## Stack` (`Language`, `Framework`, `Runtime`) [auto-managed]
+- `## Commands` (`Install`, `Build`, `Test`, `Lint`) [auto-managed]
+- `## Engineering Constraints` [manual-managed]
+- `## Non-Goals` [manual-managed]
+- `## Definition of Done` [manual-managed]
+- `## Generation Metadata` [auto-managed]
+- `## Guided Inputs` [auto-managed when unresolved]
+- `## Maintainer Notes` [manual-managed, preserved across regenerations]
+
+Script fallback (no AI agent):
+
+```sh
+sh scripts/ms-project.sh . auto "TypeScript Next.js app"
+```
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ms-project.ps1 -Root . -Mode auto -Context "TypeScript Next.js app"
+```
+
+If stack detection is uncertain, the result keeps explicit `TBD` placeholders instead of guessing.
 
 3. Review and edit `minispec/project.md`.
 
-The generated file is a draft. Update stack and command lines to your real setup.
-
-4. Create first change.
-
-Copy template and rename with change id:
-
-```text
-minispec/changes/20260323-your-change.md
+```sh
+$EDITOR minispec/project.md           # or code / notepad / vim
 ```
 
-Populate:
+The generated file is a draft. Update `Stack` and `Commands` to your real setup. Don't touch `Generation Metadata` — it is rewritten on every `minispec project` run.
 
-- Why
-- Scope (In/Out)
-- Acceptance (Given/When/Then)
-- Plan (task checklist)
+4. Create the first change card.
+
+In your AI CLI:
+
+```sh
+minispec new add checkout rate-limit
+```
+
+The agent will ask one clarifying question at a time (purpose / constraints / success criteria), propose 2–3 approaches, then write the card at `minispec/changes/<YYYYMMDD-slug>.md` with `Why` / `Approach` / `Scope` / `Acceptance` / `Plan` filled in.
+
+To write one manually without an agent:
+
+```sh
+cp minispec/templates/change.md minispec/changes/20260422-your-change.md
+$EDITOR minispec/changes/20260422-your-change.md
+```
+
+Populate `Why`, `Approach`, `Scope` (In/Out), `Acceptance` (Given/When/Then), `Plan` (task checklist).
 
 ### B. Existing Project
 
-1. Run doctor.
+1. Run doctor to surface structural and semantic issues.
+
+```sh
+minispec doctor .
+```
+
+Script fallback:
 
 ```sh
 sh scripts/ms-doctor.sh .
 ```
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& 'scripts/ms-doctor.ps1' -Root ."
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ms-doctor.ps1 -Root .
 ```
 
-2. Generate or refresh `project.md` from repository context directly.
+2. Generate or refresh `project.md` from repository context.
 
-Detect likely stack and commands from project files when possible; otherwise use guided placeholders.
+In your AI CLI:
 
-If `minispec/project.md` already exists, update auto-filled sections and preserve manual-maintained sections. If section boundaries are unclear, create a timestamped backup before refresh.
+```sh
+minispec project . auto "Spring Boot service + PostgreSQL"
+```
+
+Drop the quoted string if you want pure auto-detection with no context hint:
+
+```sh
+minispec project . auto
+```
+
+The agent detects stack from project files when possible. If `minispec/project.md` already exists, auto-managed sections refresh, manual-managed sections are preserved, and a `.bak.<YYYYMMDDHHmmss>` backup is written when section boundaries are unclear.
+
+Script fallback:
+
+```sh
+sh scripts/ms-project.sh . auto "Spring Boot service + PostgreSQL"
+```
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ms-project.ps1 -Root . -Mode auto -Context "Spring Boot service + PostgreSQL"
+```
 
 3. Review and correct commands.
 
-Detected commands are best-effort. Confirm `Install`, `Build`, `Test`, and `Lint` before implementation.
+```sh
+$EDITOR minispec/project.md
+```
+
+Detected commands are best-effort. Confirm `Install`, `Build`, `Test`, and `Lint` before the first implementation change.
 
 ### C. Use In AI CLI (Codex/Claude)
 

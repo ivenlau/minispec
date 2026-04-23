@@ -157,68 +157,128 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "& 'scripts/ms-close.ps1'
 1. 初始化目录结构与基线文件。
 
 ```sh
+minispec init .
+```
+
+脚本 fallback（没装全局 CLI 时）：
+
+```sh
 sh scripts/ms-init.sh .
 ```
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& 'scripts/ms-init.ps1' -Root ."
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ms-init.ps1 -Root .
 ```
 
-2. 直接生成 `project.md`（guided 或 context 驱动）。
+2. 生成 `project.md`（guided 或 context 驱动）。
 
-在 `minispec/project.md` 中创建或刷新以下段落：
+在你的 AI CLI（Claude Code / Codex）里让 agent 跑：
 
-- `## Stack`（`Language`、`Framework`、`Runtime`）_[CLI 自动填充]_
-- `## Commands`（`Install`、`Build`、`Test`、`Lint`）_[CLI 自动填充]_
-- `## Engineering Constraints` _[手动维护]_
-- `## Non-Goals` _[手动维护]_
-- `## Definition of Done` _[手动维护]_
-- `## Generation Metadata` _[CLI 自动填充]_
+```sh
+minispec project . auto "TypeScript Next.js app"
+```
+
+Agent 读 skill，从项目文件（package.json / pyproject.toml / go.mod 等）自动检测能识别的字段，无法确定的填 `TBD`，然后把以下各段写到 `minispec/project.md`：
+
+- `## Stack`（`Language`、`Framework`、`Runtime`）_[auto-managed]_
+- `## Commands`（`Install`、`Build`、`Test`、`Lint`）_[auto-managed]_
+- `## Engineering Constraints` _[manual-managed]_
+- `## Non-Goals` _[manual-managed]_
+- `## Definition of Done` _[manual-managed]_
+- `## Generation Metadata` _[auto-managed]_
 - `## Guided Inputs` _[未确定项自动填充]_
-- 可选 `## Maintainer Notes` _[手动维护]_
+- `## Maintainer Notes` _[manual-managed，跨重生保留]_
 
-栈检测无法确定时，保留显式 `TBD` 占位，不要瞎猜。
+脚本 fallback（无 AI agent 时）：
+
+```sh
+sh scripts/ms-project.sh . auto "TypeScript Next.js app"
+```
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ms-project.ps1 -Root . -Mode auto -Context "TypeScript Next.js app"
+```
+
+栈检测不确定时，结果会保留 `TBD` 占位而不瞎猜。
 
 3. Review 并编辑 `minispec/project.md`。
 
-生成的是草稿。把 Stack 与 Commands 改为你的真实值。
+```sh
+$EDITOR minispec/project.md           # 或 code / notepad / vim
+```
+
+生成的是草稿。把 `Stack` 与 `Commands` 改为你的真实值。别改 `Generation Metadata`——每次 `minispec project` 都会重写它。
 
 4. 建第一张 change card。
 
-复制模板并按 change id 重命名：
+在 AI CLI 里：
 
-```text
-minispec/changes/20260323-your-change.md
+```sh
+minispec new add checkout rate-limit
 ```
 
-填充：
+Agent 会一次问一个澄清问题（目的 / 约束 / 成功标准），然后给出 2–3 个备选方案与推荐，等你拍板后写 `minispec/changes/<YYYYMMDD-slug>.md`，填好 `Why` / `Approach` / `Scope` / `Acceptance` / `Plan`。
 
-- Why
-- Scope（In/Out）
-- Acceptance（Given/When/Then）
-- Plan（任务 checklist）
+没 AI 时手动写：
+
+```sh
+cp minispec/templates/change.md minispec/changes/20260422-your-change.md
+$EDITOR minispec/changes/20260422-your-change.md
+```
+
+填充 `Why`、`Approach`、`Scope`（In/Out）、`Acceptance`（Given/When/Then）、`Plan`（任务 checklist）。
 
 ### B. 已有项目
 
-1. 跑 doctor。
+1. 跑 doctor 检查结构与语义问题。
+
+```sh
+minispec doctor .
+```
+
+脚本 fallback：
 
 ```sh
 sh scripts/ms-doctor.sh .
 ```
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& 'scripts/ms-doctor.ps1' -Root ."
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ms-doctor.ps1 -Root .
 ```
 
-2. 直接从仓库上下文生成或刷新 `project.md`。
+2. 从仓库上下文生成或刷新 `project.md`。
 
-能检测到的栈与命令优先从项目文件识别；识别不到则用 guided 占位。
+在 AI CLI 里：
 
-若 `minispec/project.md` 已存在：auto-filled 段刷新，manual-maintained 段保留；段边界不清楚时先写一份时间戳后缀的备份。
+```sh
+minispec project . auto "Spring Boot service + PostgreSQL"
+```
+
+若想纯自动检测、不给 context 提示，直接：
+
+```sh
+minispec project . auto
+```
+
+Agent 尽量从项目文件识别栈。若 `minispec/project.md` 已存在：auto-managed 段刷新，manual-managed 段原样保留，段边界不清时写一份 `.bak.<YYYYMMDDHHmmss>` 备份。
+
+脚本 fallback：
+
+```sh
+sh scripts/ms-project.sh . auto "Spring Boot service + PostgreSQL"
+```
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ms-project.ps1 -Root . -Mode auto -Context "Spring Boot service + PostgreSQL"
+```
 
 3. Review 并修正命令。
 
-检测命令仅供参考。实施前请确认 `Install` / `Build` / `Test` / `Lint`。
+```sh
+$EDITOR minispec/project.md
+```
+
+检测到的命令仅供参考。开始任何实施改动之前，先确认 `Install` / `Build` / `Test` / `Lint`。
 
 ### C. 在 AI CLI 中使用（Codex / Claude）
 
