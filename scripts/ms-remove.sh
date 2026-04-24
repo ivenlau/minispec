@@ -72,9 +72,7 @@ add_delete ".agents"
 add_delete ".claude"
 
 # Inside minispec/: delete whole tree, optionally preserving subtrees.
-REMOVE_MINISPEC=1
 if [ "$KEEP_ARCHIVE" -eq 1 ] || [ "$KEEP_SPECS" -eq 1 ]; then
-  REMOVE_MINISPEC=0
   # Enumerate items inside minispec/ individually, respecting keeps.
   if [ -d "$TARGET/minispec" ]; then
     for entry in "$TARGET/minispec"/* "$TARGET/minispec"/.[!.]*; do
@@ -140,7 +138,7 @@ fi
 # Execute.
 printf '%s' "$PATHS_TO_DELETE" | while IFS= read -r p; do
   [ -n "$p" ] || continue
-  rm -rf "$TARGET/$p"
+  rm -rf "${TARGET:?}/${p:?}"
   echo "removed: $p"
 done
 
