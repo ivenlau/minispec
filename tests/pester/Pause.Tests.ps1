@@ -99,6 +99,10 @@ Describe "ms-init.ps1 drops minispec/.gitignore" {
     & pwsh -NoProfile -ExecutionPolicy Bypass -File $InitPath -Root $TestRoot -NoGitignore | Out-Null
     $gi = Join-Path $TestRoot "minispec/.gitignore"
     (Test-Path $gi) | Should -Be $true
-    (Get-Content -Raw $gi) | Should -Match "(?m)^\.paused$"
+    # Drop the `$` anchor: on Windows PowerShell writes CRLF and .NET regex
+    # `(?m)$` matches before \n but leaves \r in front of the anchor, so
+    # `^\.paused$` fails on `.paused\r\n` content. `^\.paused` is enough —
+    # the line is short and unique.
+    (Get-Content -Raw $gi) | Should -Match "(?m)^\.paused"
   }
 }
