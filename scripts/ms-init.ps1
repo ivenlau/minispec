@@ -151,6 +151,13 @@ Ensure-TextFile -RootPath $rootPath -RelativePath "CLAUDE.md" -SourceRelativePat
 # CLAUDE
 '@
 
+Ensure-TextFile -RootPath $rootPath -RelativePath "minispec/.gitignore" -SourceRelativePath "minispec/.gitignore" -DefaultContent @'
+# minispec local runtime state (not shared across a team).
+# These files live next to your contract but should never enter git.
+.paused
+*.bak.*
+'@
+
 if (-not $NoGitignore) {
   Write-MinispecGitignore -TargetRoot $rootPath
 }

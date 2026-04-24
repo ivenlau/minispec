@@ -43,6 +43,8 @@ Script-backed actions:
   doctor [<dir>]               Check structure and semantic health.
   project [<dir>] [mode] [ctx] Generate/refresh minispec/project.md (agent-preferred; this is the script fallback).
   close <id> <domain> [<dir>]  Close a change card and merge to specs/<domain>.md.
+  pause [--reason "<text>"]    Temporarily disable the workflow (agents skip ceremony).
+  resume                       Re-enable the workflow.
 
 Agent-driven actions (CLI prints guidance only):
   new <idea>                   Create a change card from an idea.
@@ -108,6 +110,12 @@ case "$action" in
     ;;
   close)
     exec sh "$scripts_dir/ms-close.sh" "$@"
+    ;;
+  pause)
+    exec sh "$scripts_dir/ms-pause.sh" "$@"
+    ;;
+  resume)
+    exec sh "$scripts_dir/ms-resume.sh" "$@"
     ;;
   new|apply|check|analyze)
     print_agent_hint "$action" "$@"

@@ -39,6 +39,8 @@ Script-backed actions:
   doctor [<dir>]               Check structure and semantic health.
   project [<dir>] [mode] [ctx] Generate/refresh minispec/project.md (agent-preferred; this is the script fallback).
   close <id> <domain> [<dir>]  Close a change card and merge to specs/<domain>.md.
+  pause [--reason "<text>"]    Temporarily disable the workflow (agents skip ceremony).
+  resume                       Re-enable the workflow.
 
 Agent-driven actions (CLI prints guidance only):
   new <idea>                   Create a change card from an idea.
@@ -139,6 +141,31 @@ switch -Regex ($action) {
     $dom = $rest[1]
     $rt  = if ($rest.Count -gt 2) { $rest[2] } else { "." }
     & (Join-Path $scriptsDir "ms-close.ps1") -ChangeId $cid -Domain $dom -Root $rt
+    exit $LASTEXITCODE
+  }
+  '^pause$' {
+    $targetRoot = "."
+    $reason = ""
+    for ($i = 0; $i -lt $rest.Count; $i++) {
+      $t = $rest[$i]
+      if ($t -eq "--reason" -or $t -eq "-Reason") {
+        if ($i + 1 -lt $rest.Count) { $reason = $rest[$i + 1]; $i++ }
+      } elseif ($t -like "--reason=*") {
+        $reason = $t.Substring("--reason=".Length)
+      } elseif (-not $t.StartsWith("-")) {
+        $targetRoot = $t
+      }
+    }
+    if ($reason) {
+      & (Join-Path $scriptsDir "ms-pause.ps1") -Root $targetRoot -Reason $reason
+    } else {
+      & (Join-Path $scriptsDir "ms-pause.ps1") -Root $targetRoot
+    }
+    exit $LASTEXITCODE
+  }
+  '^resume$' {
+    $targetRoot = if ($rest.Count -gt 0) { $rest[0] } else { "." }
+    & (Join-Path $scriptsDir "ms-resume.ps1") -Root $targetRoot
     exit $LASTEXITCODE
   }
   '^(new|apply|check|analyze)$' {

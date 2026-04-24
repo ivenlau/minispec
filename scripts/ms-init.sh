@@ -141,6 +141,12 @@ Lightweight spec-first workflow for code changes."
 ensure_text_file "AGENTS.md" "AGENTS.md" "# AGENTS"
 ensure_text_file "CLAUDE.md" "CLAUDE.md" "# CLAUDE"
 
+ensure_text_file "minispec/.gitignore" "minispec/.gitignore" "# minispec local runtime state (not shared across a team).
+# These files live next to your contract but should never enter git.
+.paused
+*.bak.*
+"
+
 if [ "$WRITE_GITIGNORE" -eq 1 ]; then
   write_minispec_gitignore
 fi

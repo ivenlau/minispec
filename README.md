@@ -78,6 +78,24 @@ minispec init --no-gitignore .
 
 Idempotence — running `minispec init` again on the same target never duplicates the marker block.
 
+## Pausing minispec
+
+minispec is opinionated by default — clarify, propose, card, apply, check, close — which is great for meaningful changes and heavy for a typo. When you need a break from the ceremony (hotfix loop, debugging, rapid exploration), pause it:
+
+```sh
+minispec pause --reason "debugging auth redirect"
+```
+
+While paused, agents treat your requests as normal coding tasks: no card, no propose, no merge. Guardrails still apply (no unauthorized dependency additions, no unrelated cleanup). When you're done:
+
+```sh
+minispec resume
+```
+
+Explicit `minispec <action>` calls always override the pause — if you say `minispec new add-refund-filter` while paused, the ceremony runs anyway.
+
+Pause state lives in `minispec/.paused` and is always git-ignored via `minispec/.gitignore` (dropped by `minispec init`), so it stays per-developer. `minispec doctor` emits a `[WARN]` if you've been paused for more than 4 hours — a nudge, not a failure.
+
 ## Workflow
 
 1. `project`: Generate or refresh `project.md`. _(agent-preferred; script fallback: `scripts/ms-project.*`)_

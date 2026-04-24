@@ -32,6 +32,19 @@ Support six actions:
 - `analyze <quick|normal|deep>`
 - `close <change-id>`
 
+Plus two ceremony-control commands:
+
+- `pause [--reason "<text>"]`
+- `resume`
+
+## Pause Awareness
+
+Before interpreting a user request as a minispec action (`new` / `apply` / `check` / `close` / `analyze`), check for `minispec/.paused`:
+
+- If the marker exists AND the user's request does NOT explicitly invoke `minispec <action>` (or reference a specific change card by id), treat the request as a normal coding task — no card, no propose, no merge. Guardrails still apply.
+- If the marker exists AND the user explicitly invokes a minispec action, honor the invocation (explicit intent overrides the pause default).
+- While paused, mention it briefly in your first response of the session ("minispec is paused; run `minispec resume` to re-enable"). Don't repeat the reminder in every message.
+
 ## Behavior
 
 ### new

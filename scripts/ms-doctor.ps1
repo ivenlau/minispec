@@ -84,6 +84,24 @@ if (Test-Path $projPath) {
   }
 }
 
+# 2. Pause marker staleness (> 4h).
+$pauseMarker = Join-Path $rootPath "minispec/.paused"
+if (Test-Path $pauseMarker) {
+  $markerText = Get-Content -Path $pauseMarker -Raw -Encoding UTF8
+  if ($markerText -match "(?m)^paused_at:\s*(\S+)") {
+    $pausedTs = $Matches[1]
+    try {
+      $prev = [DateTime]::Parse($pausedTs).ToUniversalTime()
+      $diffSec = [int](([DateTime]::UtcNow - $prev).TotalSeconds)
+      if ($diffSec -gt 14400) {
+        $h = [math]::Floor($diffSec / 3600)
+        $m = [math]::Floor(($diffSec % 3600) / 60)
+        Write-SemWarn ("minispec has been paused for {0}h {1}m (since {2}); run 'minispec resume' if you meant to be back on." -f $h, $m, $pausedTs)
+      }
+    } catch { }
+  }
+}
+
 $cutoffDate = (Get-Date).AddDays(-14).ToString("yyyyMMdd")
 
 $changesDir = Join-Path $rootPath "minispec/changes"

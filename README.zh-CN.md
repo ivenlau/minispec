@@ -90,6 +90,24 @@ minispec init --no-gitignore .
 
 幂等：对同一目录再跑一次 `minispec init` 不会重复写入 marker 块。
 
+## 暂停 minispec
+
+默认情况下 minispec 有一套规矩——澄清、提方案、建卡、实施、校验、归档——对重大变更是杠杆，对一个 typo 是负担。想从 ceremony 里喘口气（热修、调试、快速试错），暂停它：
+
+```sh
+minispec pause --reason "调试 auth redirect"
+```
+
+暂停期间，agent 把你的请求当普通编码任务处理：不建卡、不提方案、不归档。Guardrails 仍然生效（不擅自加依赖、不越界 refactor）。搞完再：
+
+```sh
+minispec resume
+```
+
+显式的 `minispec <action>` 调用始终覆盖 pause——你在暂停期间敲 `minispec new add-refund-filter`，ceremony 照常跑。
+
+Pause 状态存在 `minispec/.paused`，由 `minispec/.gitignore`（`minispec init` 时落下）永久从 git 排除，所以状态是"每个开发者自己的"。若你暂停超过 4 小时，`minispec doctor` 会发一条 `[WARN]` 提醒——是推一把，不是阻断。
+
 ## 工作流
 
 1. `project`：生成或刷新 `project.md`。_(agent 首选；脚本 fallback：`scripts/ms-project.*`)_

@@ -93,6 +93,30 @@ if [ -f "$ROOT/minispec/project.md" ]; then
   fi
 fi
 
+# 2. Pause marker staleness (> 4h).
+PAUSE_MARKER="$ROOT/minispec/.paused"
+if [ -f "$PAUSE_MARKER" ]; then
+  paused_ts="$(awk -F': ' '$1=="paused_at"{print $2; exit}' "$PAUSE_MARKER")"
+  if [ -n "$paused_ts" ]; then
+    if paused_epoch="$(date -u -d "$paused_ts" +%s 2>/dev/null)"; then
+      :
+    elif paused_epoch="$(date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$paused_ts" +%s 2>/dev/null)"; then
+      :
+    else
+      paused_epoch=""
+    fi
+    if [ -n "$paused_epoch" ]; then
+      now_epoch="$(date -u +%s)"
+      diff=$(( now_epoch - paused_epoch ))
+      hours=$(( diff / 3600 ))
+      minutes=$(( (diff % 3600) / 60 ))
+      if [ "$diff" -gt 14400 ]; then
+        sem_warn "minispec has been paused for ${hours}h ${minutes}m (since $paused_ts); run 'minispec resume' if you meant to be back on."
+      fi
+    fi
+  fi
+fi
+
 # Compute staleness cutoff (14 days ago in YYYYMMDD). Skip staleness check if neither GNU nor BSD date supports the flag.
 CUTOFF_YMD=""
 if cutoff_try="$(date -d '14 days ago' +%Y%m%d 2>/dev/null)"; then

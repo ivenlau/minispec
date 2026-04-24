@@ -18,8 +18,17 @@ Lightweight spec-first workflow for coding tasks.
 ## Inputs
 
 - Action: `project`, `new`, `apply`, `check`, `analyze`, or `close`.
+- Ceremony control: `pause [--reason "<text>"]` or `resume`.
 - Optional change id, for example: `20260323-refund-filter`.
 - Optional user request text.
+
+## Pause Awareness
+
+Before interpreting a user request as a minispec action (`new` / `apply` / `check` / `close` / `analyze`), check for `minispec/.paused`:
+
+- If the marker exists AND the user's request does NOT explicitly invoke `minispec <action>` (or reference a specific change card by id), treat the request as a normal coding task — no card, no propose, no merge. Guardrails still apply.
+- If the marker exists AND the user explicitly invokes a minispec action, honor the invocation (explicit intent overrides the pause default).
+- While paused, mention it briefly in your first response of the session ("minispec is paused; run `minispec resume` to re-enable"). Don't repeat the reminder in every message.
 
 ## Directory Contract
 
