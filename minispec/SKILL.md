@@ -37,6 +37,12 @@ Plus two ceremony-control commands:
 - `pause [--reason "<text>"]`
 - `resume`
 
+Plus three lifecycle commands (user-facing, not agent-driven):
+
+- `upgrade [<dir>]` — refresh agent files from the installed CLI share.
+- `remove [<dir>]` — delete minispec scaffolding from a project (destructive; interactive by default).
+- `uninstall` — remove the global CLI (launcher + share directory + Windows PATH entry).
+
 ## Pause Awareness
 
 Before interpreting a user request as a minispec action (`new` / `apply` / `check` / `close` / `analyze`), check for `minispec/.paused`:

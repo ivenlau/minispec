@@ -108,6 +108,50 @@ minispec resume
 
 Pause 状态存在 `minispec/.paused`，由 `minispec/.gitignore`（`minispec init` 时落下）永久从 git 排除，所以状态是"每个开发者自己的"。若你暂停超过 4 小时，`minispec doctor` 会发一条 `[WARN]` 提醒——是推一把，不是阻断。
 
+## 升级与卸载
+
+### 升级项目的 agent 文件到最新 CLI 版本
+
+`install.sh` / `install.ps1` 重跑一遍能刷 CLI 本体，但已经 init 过的项目里 `AGENTS.md` / `CLAUDE.md` / SKILL 还是旧的。拉最新的：
+
+```sh
+minispec upgrade .                       # 只刷 4 个 agent 文件（不碰业务数据）
+minispec upgrade . --dry-run             # 预览会改什么
+minispec upgrade . --include-template    # 顺带拉最新 change.md 模板
+```
+
+`upgrade` 永远不会碰 `minispec/project.md`、`minispec/specs/`、`minispec/changes/`、`minispec/archive/`——那些是你的。
+
+### 从项目彻底删除 minispec
+
+```sh
+minispec remove .                        # 删之前会交互确认
+minispec remove . --yes                  # 不问直接删（非交互场景）
+minispec remove . --keep-archive         # 保留 minispec/archive/（变更历史）
+minispec remove . --dry-run              # 预览会删什么
+```
+
+`remove` 默认删 `AGENTS.md`、`CLAUDE.md`、`.agents/`、`.claude/` 和整个 `minispec/` 目录，并从 `.gitignore` 里抠掉 `# >>> minispec` marker 块。
+
+### 卸载全局 CLI
+
+```sh
+minispec uninstall --yes                 # 删 launcher + 安装目录 + Windows 的 user PATH 条目
+```
+
+如果 CLI 本身坏了装不回 + 卸不干净，直接走 install 的同款姿势：
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ivenlau/minispec/main/uninstall.sh | sh -s -- --yes
+```
+
+```powershell
+irm https://raw.githubusercontent.com/ivenlau/minispec/main/uninstall.ps1 | iex
+# （会交互确认；提前 $env:MINISPEC_YES = "1" 可跳过）
+```
+
+`uninstall` 不碰任何项目——项目的 `minispec/` 目录还在。想一并清理，先 `minispec remove <dir>` 再 uninstall。
+
 ## 工作流
 
 1. `project`：生成或刷新 `project.md`。_(agent 首选；脚本 fallback：`scripts/ms-project.*`)_

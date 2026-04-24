@@ -46,6 +46,11 @@ Script-backed actions:
   pause [--reason "<text>"]    Temporarily disable the workflow (agents skip ceremony).
   resume                       Re-enable the workflow.
 
+Lifecycle commands:
+  upgrade [<dir>]              Refresh agent files in <dir> from the installed CLI share.
+  remove [<dir>] [--yes]       Delete minispec scaffolding from <dir> (destructive; prompts by default).
+  uninstall [--yes]            Remove the global minispec CLI (deletes launcher + share directory).
+
 Agent-driven actions (CLI prints guidance only):
   new <idea>                   Create a change card from an idea.
   apply <change-id>            Implement the plan.
@@ -116,6 +121,21 @@ case "$action" in
     ;;
   resume)
     exec sh "$scripts_dir/ms-resume.sh" "$@"
+    ;;
+  upgrade)
+    exec sh "$scripts_dir/ms-upgrade.sh" --source "$share_dir" "$@"
+    ;;
+  remove)
+    exec sh "$scripts_dir/ms-remove.sh" "$@"
+    ;;
+  uninstall)
+    # Prefer the repo-root uninstall.sh shipped alongside the share,
+    # fall back to a minimal inline removal if somehow missing.
+    if [ -f "$share_dir/uninstall.sh" ]; then
+      exec sh "$share_dir/uninstall.sh" "$@"
+    fi
+    echo "minispec: uninstall.sh not found at $share_dir" >&2
+    exit 1
     ;;
   new|apply|check|analyze)
     print_agent_hint "$action" "$@"

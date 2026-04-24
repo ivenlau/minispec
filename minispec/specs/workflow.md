@@ -81,6 +81,40 @@ Inputs: `<change-id>`, `<domain>`.
 
 The marker file is always excluded from git via `<root>/minispec/.gitignore` (dropped by `ms-init`), so pause state stays per-developer regardless of whether the project uses dev-local or team-mode git tracking.
 
+## Lifecycle: install / init / upgrade / remove / uninstall
+
+The lifecycle commands manage where minispec lives on disk — on the user's machine (global CLI) and inside their projects. They are not agent-driven; agents should not invoke them on the user's behalf without an explicit request.
+
+### install
+
+- Given a user runs `curl -fsSL .../install.sh | sh` (or `irm .../install.ps1 | iex`), Then `<prefix>/share/minispec/` receives a full copy of the repo and `<prefix>/bin/minispec` becomes a global command. On Windows the installer appends `<prefix>\bin` to user PATH.
+
+### init
+
+- Given a project directory `<target>`, When `minispec init <target>` runs, Then agent entry files (AGENTS.md / CLAUDE.md / .agents/ / .claude/) and the contract tree (minispec/{specs,changes,archive,templates}) are created, along with `<target>/minispec/.gitignore` (ignoring `.paused` and `*.bak.*`). Unless `--no-gitignore` is passed, a marker-wrapped block is appended to `<target>/.gitignore` hiding the whole minispec subtree.
+
+### upgrade
+
+- Given a project `<target>` already initialised with minispec, When `minispec upgrade <target>` runs, Then the following files are refreshed from the installed CLI share: `AGENTS.md`, `CLAUDE.md`, `.agents/skills/minispec/SKILL.md`, `.claude/skills/minispec/SKILL.md`.
+- Given `--include-template` / `--include-gitignore` / `--include-canonical-skill`, Then those additional files are refreshed too (opt-in because users may have customised them).
+- Given `--dry-run`, Then the command prints `would update: <file>` / `unchanged: <file>` lines but does not touch disk.
+- Business data MUST NOT be touched: `minispec/project.md`, `minispec/specs/*`, `minispec/changes/*`, `minispec/archive/*` are never overwritten by `upgrade`.
+
+### remove
+
+- Given a project `<target>` with minispec scaffolding, When `minispec remove <target>` runs, Then `<target>/AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, and `minispec/` are deleted, and any `# >>> minispec` marker block in `<target>/.gitignore` is stripped.
+- Given `--keep-archive` / `--keep-specs`, Then the corresponding subtree inside `minispec/` is preserved; everything else goes.
+- Given no `--yes` in a non-TTY environment, Then `remove` refuses with "pass --yes to proceed".
+- Given no `--yes` in a TTY, Then `remove` prints the delete list and asks `Continue? [y/N]` before proceeding.
+- Given `--dry-run`, Then `remove` prints the delete list and exits without touching disk.
+
+### uninstall
+
+- Given a global minispec CLI install at `<prefix>`, When `uninstall.sh --yes` (or `uninstall.ps1 -Yes`) runs, Then the launcher, the share directory, and (Windows) the user PATH entry pointing at `<prefix>\bin` are all removed.
+- Given `--dry-run`, Then the command prints what would be removed without touching disk.
+- Given no `--yes` in a non-TTY environment, Then `uninstall` refuses.
+- `uninstall` does NOT touch any project directory — downstream projects that used minispec keep their `minispec/` tree and agent files intact. Use `minispec remove <dir>` beforehand if you also want to clean those.
+
 ## Parity Invariants
 
 - `scripts/ms-close.sh` and `scripts/ms-close.ps1` MUST produce byte-equivalent Notes merge blocks (modulo line-ending conventions) for the same input card.

@@ -48,7 +48,8 @@ try {
   $items = @(
     "scripts", "minispec", ".agents", ".claude", "bin",
     "AGENTS.md", "CLAUDE.md", "README.md", "README.zh-CN.md",
-    "VERSION", "LICENSE"
+    "VERSION", "LICENSE",
+    "uninstall.sh", "uninstall.ps1"
   )
   foreach ($item in $items) {
     $src = Join-Path $extracted.FullName $item

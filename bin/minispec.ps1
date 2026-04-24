@@ -42,6 +42,11 @@ Script-backed actions:
   pause [--reason "<text>"]    Temporarily disable the workflow (agents skip ceremony).
   resume                       Re-enable the workflow.
 
+Lifecycle commands:
+  upgrade [<dir>]              Refresh agent files in <dir> from the installed CLI share.
+  remove [<dir>] [--yes]       Delete minispec scaffolding from <dir> (destructive; prompts by default).
+  uninstall [--yes]            Remove the global minispec CLI (deletes launcher + install directory + PATH entry).
+
 Agent-driven actions (CLI prints guidance only):
   new <idea>                   Create a change card from an idea.
   apply <change-id>            Implement the plan.
@@ -166,6 +171,63 @@ switch -Regex ($action) {
   '^resume$' {
     $targetRoot = if ($rest.Count -gt 0) { $rest[0] } else { "." }
     & (Join-Path $scriptsDir "ms-resume.ps1") -Root $targetRoot
+    exit $LASTEXITCODE
+  }
+  '^upgrade$' {
+    $targetRoot = "."
+    $extraArgs = @()
+    for ($i = 0; $i -lt $rest.Count; $i++) {
+      $t = $rest[$i]
+      switch -Regex ($t) {
+        '^--dry-run$|^-DryRun$'                 { $extraArgs += "-DryRun"; continue }
+        '^--include-template$|^-IncludeTemplate$' { $extraArgs += "-IncludeTemplate"; continue }
+        '^--include-gitignore$|^-IncludeGitignore$' { $extraArgs += "-IncludeGitignore"; continue }
+        '^--include-canonical-skill$|^-IncludeCanonicalSkill$' { $extraArgs += "-IncludeCanonicalSkill"; continue }
+        default {
+          if (-not $t.StartsWith("-")) { $targetRoot = $t }
+        }
+      }
+    }
+    & (Join-Path $scriptsDir "ms-upgrade.ps1") -Target $targetRoot -Source $shareDir @extraArgs
+    exit $LASTEXITCODE
+  }
+  '^remove$' {
+    $targetRoot = "."
+    $extraArgs = @()
+    for ($i = 0; $i -lt $rest.Count; $i++) {
+      $t = $rest[$i]
+      switch -Regex ($t) {
+        '^--yes$|^-y$|^-Yes$'               { $extraArgs += "-Yes"; continue }
+        '^--keep-archive$|^-KeepArchive$'   { $extraArgs += "-KeepArchive"; continue }
+        '^--keep-specs$|^-KeepSpecs$'       { $extraArgs += "-KeepSpecs"; continue }
+        '^--dry-run$|^-DryRun$'             { $extraArgs += "-DryRun"; continue }
+        default {
+          if (-not $t.StartsWith("-")) { $targetRoot = $t }
+        }
+      }
+    }
+    & (Join-Path $scriptsDir "ms-remove.ps1") -Target $targetRoot @extraArgs
+    exit $LASTEXITCODE
+  }
+  '^uninstall$' {
+    $uninstallPath = Join-Path $shareDir "uninstall.ps1"
+    if (-not (Test-Path $uninstallPath)) {
+      Write-Error "minispec: uninstall.ps1 not found at $shareDir"
+      exit 1
+    }
+    $extraArgs = @()
+    for ($i = 0; $i -lt $rest.Count; $i++) {
+      $t = $rest[$i]
+      switch -Regex ($t) {
+        '^--yes$|^-y$|^-Yes$'       { $extraArgs += "-Yes"; continue }
+        '^--dry-run$|^-DryRun$'     { $extraArgs += "-DryRun"; continue }
+        '^--prefix$|^-Prefix$' {
+          if ($i + 1 -lt $rest.Count) { $extraArgs += @("-Prefix", $rest[$i + 1]); $i++ }
+          continue
+        }
+      }
+    }
+    & $uninstallPath @extraArgs
     exit $LASTEXITCODE
   }
   '^(new|apply|check|analyze)$' {

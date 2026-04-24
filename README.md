@@ -96,6 +96,50 @@ Explicit `minispec <action>` calls always override the pause — if you say `min
 
 Pause state lives in `minispec/.paused` and is always git-ignored via `minispec/.gitignore` (dropped by `minispec init`), so it stays per-developer. `minispec doctor` emits a `[WARN]` if you've been paused for more than 4 hours — a nudge, not a failure.
 
+## Upgrading and removing
+
+### Upgrade a project's agent files to match the latest CLI
+
+After `install.sh` / `install.ps1` refreshes the CLI itself (re-run the same one-liner), projects that were already initialised still carry the old `AGENTS.md`, `CLAUDE.md`, and SKILL files. Pull the latest versions into the project:
+
+```sh
+minispec upgrade .                       # refresh 4 agent files (never touches business data)
+minispec upgrade . --dry-run             # preview what would change
+minispec upgrade . --include-template    # also pull the latest change.md template
+```
+
+`upgrade` never touches `minispec/project.md`, `minispec/specs/`, `minispec/changes/`, or `minispec/archive/` — those are yours.
+
+### Remove minispec from a project
+
+```sh
+minispec remove .                        # prompts before deleting
+minispec remove . --yes                  # no prompt (non-interactive use)
+minispec remove . --keep-archive         # preserve minispec/archive/ (historical cards)
+minispec remove . --dry-run              # preview what would be removed
+```
+
+`remove` deletes `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, and the whole `minispec/` tree by default, and strips the `# >>> minispec` marker block from `.gitignore`.
+
+### Uninstall the global CLI
+
+```sh
+minispec uninstall --yes                 # removes launcher + install dir + Windows PATH entry
+```
+
+Or, if the CLI itself is broken, bootstrap the uninstaller the same way as install:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ivenlau/minispec/main/uninstall.sh | sh -s -- --yes
+```
+
+```powershell
+irm https://raw.githubusercontent.com/ivenlau/minispec/main/uninstall.ps1 | iex
+# (prompts for confirmation; set $env:MINISPEC_YES = "1" first to skip)
+```
+
+`uninstall` does not touch any project — projects keep their `minispec/` tree. Run `minispec remove <dir>` first if you also want to clean those.
+
 ## Workflow
 
 1. `project`: Generate or refresh `project.md`. _(agent-preferred; script fallback: `scripts/ms-project.*`)_

@@ -19,6 +19,7 @@ Lightweight spec-first workflow for coding tasks.
 
 - Action: `project`, `new`, `apply`, `check`, `analyze`, or `close`.
 - Ceremony control: `pause [--reason "<text>"]` or `resume`.
+- Lifecycle (user-facing, not agent-driven): `upgrade [<dir>]`, `remove [<dir>]`, `uninstall`.
 - Optional change id, for example: `20260323-refund-filter`.
 - Optional user request text.
 

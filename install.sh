@@ -100,7 +100,7 @@ fi
 
 mkdir -p "$SHARE_DIR"
 
-for item in scripts minispec .agents .claude bin AGENTS.md CLAUDE.md README.md README.zh-CN.md VERSION LICENSE; do
+for item in scripts minispec .agents .claude bin AGENTS.md CLAUDE.md README.md README.zh-CN.md VERSION LICENSE uninstall.sh uninstall.ps1; do
   src="$EXTRACTED/$item"
   if [ -e "$src" ]; then
     cp -R "$src" "$SHARE_DIR/"
