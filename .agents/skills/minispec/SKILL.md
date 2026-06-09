@@ -81,10 +81,11 @@ Before interpreting a user request as a minispec action (`new` / `apply` / `chec
 ## Action: apply
 
 1. Open target file in `minispec/changes/<id>.md`.
-2. Execute plan tasks in order and keep scope tight.
-3. After each completed task, mark the checkbox as done.
-4. If scope changes, update `Scope` and add one acceptance item before coding more.
-5. Do not close the card in this action.
+2. Before coding, evaluate: is this the simplest approach that satisfies the acceptance criteria? If a significantly simpler path exists, note it in the card and confirm with the user before proceeding.
+3. Execute plan tasks in order and keep scope tight. Touch only files that the plan requires — don't refactor or "improve" adjacent code.
+4. After each completed task, mark the checkbox as done.
+5. If scope changes, update `Scope` and add one acceptance item before coding more.
+6. Do not close the card in this action.
 
 ## Action: check
 
@@ -133,3 +134,5 @@ The canonical spec only captures `Why`, `Scope`, `Acceptance`, and `Notes`. `Pla
 - No dependency additions without explicit approval.
 - No broad cleanup outside scope.
 - No close action if acceptance is incomplete.
+- Simplicity first: minimum code that solves the problem. No speculative features, unnecessary abstractions, or flexibility that wasn't requested.
+- Surgical changes: every changed line must trace to the plan. Don't improve adjacent code, refactor what works, or touch files outside scope.

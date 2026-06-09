@@ -108,3 +108,31 @@ minispec 的 `new` 动作当前只要求 "Ask for missing critical details only 
 - 决策：Approach 段只入 card/archive，不进 domain spec，与 Plan/Risks 的处理保持同一风格（P1-4 既有契约）。
 - 决策：三份 SKILL 各改各的，不走 P2-a 的 "单源 + 同步检查" 机制——Guardrails 段未动，doctor 的同步检查继续有效。
 - 后续卡候选：若发现 spec 读者需要看到 Approach，起一张新卡把它进入 ms-close 的合并范围。
+
+## Change 20260609-karpathy-principles (2026-06-09)
+
+### Why
+
+andrej-karpathy-skills 的四条核心原则能有效减少 LLM 编码常见错误。minispec 的 `new`/`check` 已覆盖 Think Before Coding 和 Goal-Driven Execution，但 Simplicity First 和 Surgical Changes 在 `apply` 行为中缺乏显式约束。需要将这两条原则集成到 SKILL.md 的 Guardrails 和 apply 步骤中。
+
+### Scope
+
+- In:
+  - `minispec/SKILL.md`（canonical）、`.claude/skills/minispec/SKILL.md`、`.agents/skills/minispec/SKILL.md`
+  - `## Guardrails` 新增 Simplicity First 和 Surgical Changes 两条约束
+  - `apply` 行为新增步骤：实现前评估方案最简性，实现时只改必要文件
+- Out:
+  - 不修改 CLAUDE.md / AGENTS.md
+  - 不新增 Guiding Principles 章节
+
+### Acceptance
+
+- [x] Given agent 执行 apply, When 查看 SKILL.md 的 apply 步骤, Then 包含"评估方案是否最简"和"只改必要文件"的显式指引
+- [x] Given agent 执行 apply, When 查看 SKILL.md 的 Guardrails, Then 包含 Simplicity First 和 Surgical Changes 的核心约束
+- [x] Given 三个 SKILL.md 文件, When 对比 Guardrails 章节, Then 三者内容完全一致
+
+### Notes
+
+- 原则 1（Think Before Coding）和原则 4（Goal-Driven Execution）已被 minispec 覆盖，无需改动
+- Guardrails 段保持三份一致，doctor 同步检查继续有效
+- 来源：https://github.com/ivenlau/andrej-karpathy-skills
